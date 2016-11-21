@@ -5,8 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
@@ -23,7 +24,7 @@ import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
 
 public class ZouniProcess implements ServerProcess {
-	private static SimpleDateFormat format = new SimpleDateFormat("d MMM yyyy hh:mm:ss 'GMT'");
+	private static DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("Z"));
 	private Socket socket;
 	private String servletPackage;
 	private File fileBase;
@@ -152,7 +153,7 @@ public class ZouniProcess implements ServerProcess {
 						os.write(String.valueOf(baos.size()).getBytes());
 						os.write(Constants.RES_LINE_END);
 						os.write(Constants.RES_LAST_MODIFIED);
-						os.write(format.format(new Date()).getBytes());
+						os.write(formatter.format(OffsetDateTime.now()).getBytes());
 						os.write(Constants.RES_LINE_END);
 						os.write(Constants.RES_SERVER);
 						os.write(Constants.RES_LINE_END);
