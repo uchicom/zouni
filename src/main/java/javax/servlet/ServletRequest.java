@@ -7,7 +7,7 @@ import java.util.Locale;
 
 public interface ServletRequest {
 	public Object getAttribute(String name);
-	public Object getAttribute(String name, Object attribute);
+	public void setAttribute(String name, Object attribute);
 	@SuppressWarnings("rawtypes")
 	public Enumeration getAttributeNames();
 	public void removeAttribute(String name);
@@ -20,7 +20,7 @@ public interface ServletRequest {
 	public ServletInputStream getInputStream() throws IOException;
 	public String getParameter(String name);
 	public String getParameterNames();
-	public String getParameterValues();
+	public String[] getParameterValues(String name);
 	public String getProtocol();
 	public String getScheme();
 	public String getServerName();
@@ -30,8 +30,8 @@ public interface ServletRequest {
 	public String getRemoteHost();
 	public Boolean isSecure();
 	public RequestDispatcher getRequestDispatcher(String path);
-	 
+
 	// deprecated methods
 	public String getRaelPath();
-	 
+
 }

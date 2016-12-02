@@ -1,14 +1,18 @@
 package com.uchicom.zouni.servlet;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -22,10 +26,11 @@ public class ZouniServletRequest implements HttpServletRequest {
 	private String method;
 	private Socket socket;
 	private String requestUri;
-	private ZouniSession session = new ZouniSession();
-	private Map<String, String> parameterMap = new HashMap<String, String>();
+	private ZouniSession session;
+	private Map<String, Value> valueMap = new HashMap<String, Value>();
 	private boolean gzip;
 	private boolean deflate;
+	private ByteArrayInputStream bais;
 	public ZouniServletRequest(Socket socket) {
 		this.socket = socket;
 		InputStream is = null;
@@ -56,6 +61,8 @@ public class ZouniServletRequest implements HttpServletRequest {
 					} else {
 						setParameters(str.substring(startIndex));
 					}
+					//Reader作成
+					bais = new ByteArrayInputStream(str.substring(startIndex).getBytes());
 				}
 				int index = str.indexOf("Accept-Encoding:");
 				if (index >= 0) {
@@ -66,6 +73,20 @@ public class ZouniServletRequest implements HttpServletRequest {
 							gzip = true;
 						} else if (!deflate && "deflate".equals(enc)){
 							deflate = true;
+						}
+					}
+				}
+				index = str.indexOf("Cookie:");
+				if (index >= 0) {
+					int lastIndex = str.indexOf("\r\n", index);
+					System.out.println("[" + str.substring(index + 7, lastIndex) + "]");
+					for (String cookie : str.substring(index + 7, lastIndex).trim().split(";")) {
+						System.out.println("Cookie:" + cookie);
+						String[] keyValue = cookie.split("=");
+						if (keyValue[0].equals("JSESSIONID")) {
+							System.out.println("JSESSIONID:" + cookie);
+							this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
+							System.out.println("session:" +  session);
 						}
 					}
 				}
@@ -80,26 +101,44 @@ public class ZouniServletRequest implements HttpServletRequest {
 		for (String split : parameters.split("&")) {
 			int index = split.indexOf("=");
 			if (index > 0) {
+				String key = split.substring(0, index);
 				if (index == split.length() - 1) {
-					parameterMap.put(split.substring(0, index), null);
+					valueMap.put("param." + key, null);
 				} else {
-					parameterMap.put(split.substring(0, index), split.substring(index + 1));
+					if (valueMap.containsKey("param." + key)) {
+						Value value = valueMap.get("param." + key);
+						if (value != null) {
+							if (value.getParameters() == null) {
+								List<String> list = new ArrayList<String>();
+								list.add(value.getParameter());
+								list.add(split.substring(index + 1));
+							} else {
+								value.getParameters().add(split.substring(index + 1));
+							}
+						}
+					} else {
+						Value value = new Value();
+						value.setParameter(split.substring(index + 1));
+						valueMap.put("param." + key, value);
+					}
 				}
 			}
 		}
-		System.out.println(parameterMap);
 
 	}
 	@Override
 	public Object getAttribute(String name) {
-		// TODO Auto-generated method stub
+		if (valueMap.containsKey("attribute." + name)) {
+			return valueMap.get("attribute." + name).getAttribute();
+		}
 		return null;
 	}
 
 	@Override
-	public Object getAttribute(String name, Object attribute) {
-		// TODO Auto-generated method stub
-		return null;
+	public void setAttribute(String name, Object attribute) {
+		Value value = new Value();
+		value.setAttribute(attribute);
+		valueMap.put("attribute." + name, value);
 	}
 
 	@Override
@@ -152,12 +191,11 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public String getParameter(String name) {
-		String value = parameterMap.get(name);
-		if (value != null) {
+		Value value = valueMap.get("param." + name);
+		if (value != null && value.getParameter() != null) {
 			try {
-				return URLDecoder.decode(parameterMap.get(name), "utf-8");
+				return URLDecoder.decode(value.getParameter(), "utf-8");
 			} catch (UnsupportedEncodingException e) {
-				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
 			}
 		}
@@ -170,8 +208,28 @@ public class ZouniServletRequest implements HttpServletRequest {
 	}
 
 	@Override
-	public String getParameterValues() {
-		// TODO Auto-generated method stub
+	public String[] getParameterValues(String key) {
+
+		Value value = valueMap.get("param." + key);
+		if (value != null) {
+			if (value.getParameters() != null) {
+				try {
+					String[] values = new String[value.getParameters().size()];
+					for (int i = 0; i < values.length; i++) {
+						values[i] = URLDecoder.decode(value.getParameters().get(i), "utf-8");
+					}
+					return values;
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+			} else if (value.getParameter() != null) {
+				try {
+					return new String[]{URLDecoder.decode(value.getParameter(), "utf-8")};
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		return null;
 	}
 
@@ -199,8 +257,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public BufferedReader getReader() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return new BufferedReader(new InputStreamReader(bais));
 	}
 
 	@Override
@@ -357,13 +414,14 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public HttpSession getSession() {
+		System.out.println(session);
 		return session;
 	}
 
 	@Override
 	public HttpSession getSession(Boolean create) {
-		// TODO Auto-generated method stub
-		return null;
+		session = ZouniServletContext.getInstance().createSession();
+		return session;
 	}
 
 	@Override

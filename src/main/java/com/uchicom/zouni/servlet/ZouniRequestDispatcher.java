@@ -2,6 +2,7 @@ package com.uchicom.zouni.servlet;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
@@ -25,23 +26,15 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 	}
 	ZipInputStream zis;
 	@Override
-	public void forward(ServletRequest req, ServletResponse res) {
+	public void forward(ServletRequest req, ServletResponse res) throws ServletException, IOException {
 //		long start = System.currentTimeMillis();
 //	      System.out.println("memory used :" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 //	      System.out.println("memory total:" + Runtime.getRuntime().totalMemory());
 //	      System.out.println("memory max  :" + Runtime.getRuntime().maxMemory());
 		if (name.endsWith(".jsp")) {
-			Servlet servlet = getServlet(name);
 			//解析した結果を保持する
-			try {
-				servlet.service(req, res);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ServletException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			Servlet servlet = getServlet(name);
+			servlet.service(req, res);
 		} else if (name.endsWith(".htm")) {
 			//静的ファイル呼び出し
 			try {
@@ -62,10 +55,10 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 	}
 
 	@Override
-	public void include(ServletRequest req, ServletResponse res) {
+	public void include(ServletRequest req, ServletResponse res) throws ServletException, IOException {
 
 	}
-	private Servlet getServlet(String name) {
+	private Servlet getServlet(String name) throws FileNotFoundException, IOException {
 		Servlet servlet = null;
 		if (servletMap.containsKey(name)) {
 			servlet = servletMap.get(name);

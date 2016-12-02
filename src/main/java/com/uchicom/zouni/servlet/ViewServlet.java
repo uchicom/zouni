@@ -3,6 +3,7 @@ package com.uchicom.zouni.servlet;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,7 +31,7 @@ public class ViewServlet extends HttpServlet {
 
 	private List<byte[]> byteList = new ArrayList<byte[]>();
 	private List<String> replaceList = new ArrayList<String>();
-	public ViewServlet(File templateFile) {
+	public ViewServlet(File templateFile) throws FileNotFoundException, IOException {
 		//ここで解析して保持
 		try (FileInputStream fis = new FileInputStream(templateFile);) {
 			byte[] bytes = new byte[1024 * 4];
@@ -87,8 +88,6 @@ public class ViewServlet extends HttpServlet {
 			}
 
 
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
@@ -96,6 +95,9 @@ public class ViewServlet extends HttpServlet {
 			if (bytes[i] == value) return i;
 		}
 		return -1;
+	}
+	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		doPost(req, res);
 	}
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		//解析した情報を元にデータを埋め込んで
@@ -114,56 +116,67 @@ public class ViewServlet extends HttpServlet {
 			Object obj = null;
 			if (iList < replaceList.size()) {
 				String key = replaceList.get(iList);
-				obj = req.getSession().getAttribute(key);
-				if (obj == null && key.indexOf(".") > 0) {
-					try {
-						int lastIndex = key.lastIndexOf(".");
-						Class<?> classObject = Class.forName(key.substring(0, lastIndex));
-		    	        Method method = classObject.getMethod(key.substring(lastIndex + 1),
-		    	                new Class[] {  });
-		    	        obj = method.invoke(classObject, new Object[] { });
-		    		} catch (SecurityException e) {
-		    			e.printStackTrace();
-		    		} catch (NoSuchMethodException e) {
-		    			e.printStackTrace();
-		    		} catch (IllegalArgumentException e) {
-		    			e.printStackTrace();
-		    		} catch (IllegalAccessException e) {
-		    			e.printStackTrace();
-		    		} catch (InvocationTargetException e) {
-		    			e.printStackTrace();
-		    		} catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} finally {
-		    		}
+				if (req.getSession() != null) {
+					obj = req.getSession().getAttribute(key);
 				}
+
 				if (obj != null) {
-					if (obj instanceof Integer) {
-						bytes = String.valueOf(((Integer) obj).intValue()).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else if (obj instanceof String) {
-						bytes = ((String) obj).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else if (obj instanceof Boolean) {
-						bytes = String.valueOf(((Boolean) obj).booleanValue()).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else if (obj instanceof Double) {
-						bytes = String.valueOf(((Double) obj).doubleValue()).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else if (obj instanceof Float) {
-						bytes = String.valueOf(((Float) obj).floatValue()).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else if (obj instanceof Long) {
-						bytes = String.valueOf(((Long) obj).longValue()).getBytes();
-						sos.write(bytes, 0, bytes.length);
-					} else {
-						bytes = obj.toString().getBytes();
-						sos.write(bytes, 0, bytes.length);
+					writeObject(sos, obj);
+				} else {
+					obj = req.getAttribute(key);
+					if (obj != null) {
+						writeObject(sos, obj);
+					}
+					if (obj == null && key.indexOf(".") > 0) {
+						try {
+							int lastIndex = key.lastIndexOf(".");
+							Class<?> classObject = Class.forName(key.substring(0, lastIndex));
+			    	        Method method = classObject.getMethod(key.substring(lastIndex + 1),
+			    	                new Class[] {  });
+			    	        obj = method.invoke(classObject, new Object[] { });
+			    		} catch (SecurityException e) {
+			    			e.printStackTrace();
+			    		} catch (NoSuchMethodException e) {
+			    			e.printStackTrace();
+			    		} catch (IllegalArgumentException e) {
+			    			e.printStackTrace();
+			    		} catch (IllegalAccessException e) {
+			    			e.printStackTrace();
+			    		} catch (InvocationTargetException e) {
+			    			e.printStackTrace();
+			    		} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} finally {
+			    		}
 					}
 				}
 			}
 		}
-		req.getAttribute("");
+	}
+	public void writeObject(ServletOutputStream sos, Object obj) throws IOException {
+		byte[] bytes = null;
+		if (obj instanceof Integer) {
+			bytes = String.valueOf(((Integer) obj).intValue()).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else if (obj instanceof String) {
+			bytes = ((String) obj).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else if (obj instanceof Boolean) {
+			bytes = String.valueOf(((Boolean) obj).booleanValue()).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else if (obj instanceof Double) {
+			bytes = String.valueOf(((Double) obj).doubleValue()).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else if (obj instanceof Float) {
+			bytes = String.valueOf(((Float) obj).floatValue()).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else if (obj instanceof Long) {
+			bytes = String.valueOf(((Long) obj).longValue()).getBytes();
+			sos.write(bytes, 0, bytes.length);
+		} else {
+			bytes = obj.toString().getBytes();
+			sos.write(bytes, 0, bytes.length);
+		}
 	}
 }

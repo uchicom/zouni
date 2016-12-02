@@ -123,15 +123,7 @@ public class ZouniProcess implements ServerProcess {
 						servlet.service(req, res);
 					} catch (ServletException e) {
 						try (OutputStream os = socket.getOutputStream();) {
-							os.write(Constants.RES_500);
-							os.write(Constants.RES_CONTENT_TYPE);
-							os.write(Constants.RES_CONTENT_LENGTH);
-							os.write(Constants.RES_500_HTML_LENGTH);
-							os.write(Constants.RES_LINE_END);
-							os.write(Constants.RES_SERVER);
-							os.write(Constants.RES_LINE_END);
-							os.write(Constants.RES_500_HTML);
-							os.flush();
+							error404(os);
 						}
 						throw e;
 					}
@@ -156,6 +148,13 @@ public class ZouniProcess implements ServerProcess {
 						os.write(formatter.format(OffsetDateTime.now()).getBytes());
 						os.write(Constants.RES_LINE_END);
 						os.write(Constants.RES_SERVER);
+						if (req.getSession() != null && req.getSession().getId() != null) {
+							System.out.println("クッキーあり");
+							os.write(Constants.SET_COOKIE);
+							os.write(Constants.JSESSIONID);
+							os.write(req.getSession().getId().getBytes());
+							os.write(Constants.RES_LINE_END);
+						}
 						os.write(Constants.RES_LINE_END);
 						System.out.println("baos:" + baos.size());
 						os.write(baos.toByteArray());
@@ -164,15 +163,7 @@ public class ZouniProcess implements ServerProcess {
 
 				} else {
 					try (OutputStream os = socket.getOutputStream();) {
-						os.write(Constants.RES_404);
-						os.write(Constants.RES_CONTENT_TYPE);
-						os.write(Constants.RES_CONTENT_LENGTH);
-						os.write(Constants.RES_440_HTML_LENGTH);
-						os.write(Constants.RES_LINE_END);
-						os.write(Constants.RES_SERVER);
-						os.write(Constants.RES_LINE_END);
-						os.write(Constants.RES_404_HTML);
-						os.flush();
+						error404(os);
 					}
 				}
 			}
@@ -206,5 +197,17 @@ public class ZouniProcess implements ServerProcess {
 	public void forceClose() {
 		// TODO 自動生成されたメソッド・スタブ
 
+	}
+
+	public static void error404(OutputStream os) throws IOException {
+		os.write(Constants.RES_404);
+		os.write(Constants.RES_CONTENT_TYPE);
+		os.write(Constants.RES_CONTENT_LENGTH);
+		os.write(Constants.RES_440_HTML_LENGTH);
+		os.write(Constants.RES_LINE_END);
+		os.write(Constants.RES_SERVER);
+		os.write(Constants.RES_LINE_END);
+		os.write(Constants.RES_404_HTML);
+		os.flush();
 	}
 }

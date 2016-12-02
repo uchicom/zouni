@@ -2,6 +2,7 @@ package com.uchicom.zouni.servlet;
 
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -9,41 +10,50 @@ import javax.servlet.http.HttpSessionContext;
 
 public class ZouniSession implements HttpSession {
 
+	private String id;
+
 	private Map<String, Object> attributeMap = new HashMap<String, Object>();
+
+	private long creationTime;
+
+	private int maxInactiveInterval;
+
+	private long lastAccessedTime;
+
+	private boolean isNew;
+
+	public ZouniSession(String id) {
+		this.id = id;
+		creationTime = System.currentTimeMillis();
+	}
 	@Override
 	public long getCreationTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		return creationTime;
 	}
 
 	@Override
 	public String getId() {
-		// TODO Auto-generated method stub
-		return null;
+		return id;
 	}
 
 	@Override
 	public long getLastAccessedTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		return lastAccessedTime;
 	}
 
 	@Override
 	public boolean isNew() {
-		// TODO Auto-generated method stub
-		return false;
+		return isNew;
 	}
 
 	@Override
 	public int getMaxInactiveInterval() {
-		// TODO Auto-generated method stub
-		return 0;
+		return maxInactiveInterval;
 	}
 
 	@Override
 	public void setMaxInactiveInterval(int interval) {
-		// TODO Auto-generated method stub
-
+		maxInactiveInterval = interval;
 	}
 
 	@Override
@@ -52,9 +62,20 @@ public class ZouniSession implements HttpSession {
 	}
 
 	@Override
-	public Enumeration<?> getAttributeNames() {
-		// TODO Auto-generated method stub
-		return null;
+	public Enumeration<String> getAttributeNames() {
+		return new Enumeration<String>() {
+			private Iterator<String> iterator = attributeMap.keySet().iterator();
+			@Override
+			public boolean hasMoreElements() {
+				return iterator.hasNext();
+			}
+
+			@Override
+			public String nextElement() {
+				return iterator.next();
+			}
+
+		};
 	}
 
 	@Override
@@ -69,35 +90,40 @@ public class ZouniSession implements HttpSession {
 
 	@Override
 	public void invalidate() {
-		// TODO Auto-generated method stub
-
+		ZouniServletContext.getInstance().removeSession(this);
+		id = null;
 	}
 
 	@Override
+	@Deprecated
 	public Object getValue(String name) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
+	@Deprecated
 	public String[] getValueNames() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
+	@Deprecated
 	public void putValue(String name, Object value) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
+	@Deprecated
 	public void removeValue(String name) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
+	@Deprecated
 	public HttpSessionContext getSessionContext() {
 		// TODO Auto-generated method stub
 		return null;

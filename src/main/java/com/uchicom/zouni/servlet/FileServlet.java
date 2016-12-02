@@ -30,6 +30,9 @@ public class FileServlet extends HttpServlet {
 		}
 	}
 
+	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		doPost(req, res);
+	}
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		res.setContentType(type);
 		//解析した情報を元にデータを埋め込んで

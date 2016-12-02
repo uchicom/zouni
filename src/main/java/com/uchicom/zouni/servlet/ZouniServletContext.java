@@ -19,6 +19,7 @@ public class ZouniServletContext implements ServletContext {
 	private static ZouniServletContext context;
 	private Map<String, Servlet> servletMap = new ConcurrentHashMap<String, Servlet>();
 	private Map<String, RequestDispatcher> rdMap = new ConcurrentHashMap<String, RequestDispatcher>();
+	private Map<String, ZouniSession> sessionMap =  new ConcurrentHashMap<String, ZouniSession>();
 	private File baseFile;
 	private ZouniServletContext(File baseFile) {
 		this.baseFile = baseFile;
@@ -172,6 +173,18 @@ public class ZouniServletContext implements ServletContext {
 	public void log(Exception exception, String message) {
 		// TODO Auto-generated method stub
 
+	}
+	public ZouniSession getSession(String key) {
+		System.out.println(sessionMap);
+		return sessionMap.get(key);
+	}
+	public ZouniSession createSession() {
+		ZouniSession session = new ZouniSession(String.valueOf(System.currentTimeMillis()));
+		sessionMap.put(session.getId(), session);
+		return session;
+	}
+	public void removeSession(ZouniSession session) {
+		sessionMap.remove(session.getId());
 	}
 
 }
