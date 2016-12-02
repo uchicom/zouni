@@ -11,11 +11,11 @@ import com.uchicom.zouni.Constants;
 public class ZouniServletConfig implements ServletConfig {
 
 	private static ZouniServletConfig zouniServletConfig;
-	private ZouniServletConfig(File baseFile) {
-		ZouniServletContext.init(baseFile);
+	private ZouniServletConfig(File baseFile, File pubFile) {
+		ZouniServletContext.init(baseFile, pubFile);
 	}
-	public static void init(File baseFile) {
-		zouniServletConfig = new ZouniServletConfig(baseFile);
+	public static void init(File baseFile, File pubFile) {
+		zouniServletConfig = new ZouniServletConfig(baseFile, pubFile);
 	}
 	public static ZouniServletConfig getInstance() {
 		return zouniServletConfig;

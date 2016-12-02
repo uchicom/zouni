@@ -30,7 +30,11 @@ public class ZouniParameter extends Parameter {
      * @return
      */
     public boolean init(PrintStream ps) {
-    	// メールボックスの基準フォルダ
+    	// 公開ディレクトリの基準フォルダ
+    	if (!is("public")) {
+    		put("public", Constants.DEFAULT_PUBLIC);
+    	}
+    	// プログラム内部で使用するディレクトリの基準フォルダ
     	if (!is("dir")) {
     		put("dir", Constants.DEFAULT_DIR);
     	}
@@ -54,7 +58,7 @@ public class ZouniParameter extends Parameter {
     	if (!is("pool")) {
     		put("pool", Constants.DEFAULT_POOL);
     	}
-    	ZouniServletConfig.init(getFile("dir"));
+    	ZouniServletConfig.init(getFile("dir"), getFile("public"));
         return true;
     }
 

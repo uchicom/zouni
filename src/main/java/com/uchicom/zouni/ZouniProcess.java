@@ -27,12 +27,12 @@ public class ZouniProcess implements ServerProcess {
 	private static DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("Z"));
 	private Socket socket;
 	private String servletPackage;
-	private File fileBase;
+	private File pubDir;
 	private Map<String, Servlet> map;
 	public ZouniProcess(Parameter parameter, Socket socket) {
 		this.socket = socket;
 		this.servletPackage = parameter.get("package");
-		this.fileBase = parameter.getFile("dir");
+		this.pubDir = parameter.getFile("public");
 		this.map = ZouniServletContext.getInstance().getServletMap();
 	}
 
@@ -51,9 +51,9 @@ public class ZouniProcess implements ServerProcess {
 						if (req.getRequestURI().endsWith("/")) {
 							File dir = null;
 							if ("/".equals(req.getRequestURI())) {
-								dir = fileBase;
+								dir = pubDir;
 							} else {
-								dir = new File(fileBase, req.getRequestURI());
+								dir = new File(pubDir, req.getRequestURI());
 							}
 							file = new File(dir, "index.htm");
 							if (!file.exists()) {
@@ -63,12 +63,12 @@ public class ZouniProcess implements ServerProcess {
 								}
 							}
 						} else {
-							file = new File(fileBase, req.getRequestURI().substring(1));
+							file = new File(pubDir, req.getRequestURI().substring(1));
 						}
-
+						System.out.println(file.getCanonicalPath());
 
 						if (file.exists()) {
-							if (file.getCanonicalPath().startsWith(fileBase.getCanonicalPath())) {
+							if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
 								if (file.getCanonicalPath().endsWith(".jsp")) {
 									servlet = new ViewServlet(file);
 								} else {

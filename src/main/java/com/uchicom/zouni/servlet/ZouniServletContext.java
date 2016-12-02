@@ -21,12 +21,14 @@ public class ZouniServletContext implements ServletContext {
 	private Map<String, RequestDispatcher> rdMap = new ConcurrentHashMap<String, RequestDispatcher>();
 	private Map<String, ZouniSession> sessionMap =  new ConcurrentHashMap<String, ZouniSession>();
 	private File baseFile;
-	private ZouniServletContext(File baseFile) {
+	private File pubFile;
+	private ZouniServletContext(File baseFile, File pubFile) {
 		this.baseFile = baseFile;
+		this.pubFile = pubFile;
 	}
 
-	public static void init(File baseFile) {
-		context = new ZouniServletContext(baseFile);
+	public static void init(File baseFile, File pubFile) {
+		context = new ZouniServletContext(baseFile, pubFile);
 	}
 	public static ZouniServletContext getInstance() {
 		return context;
@@ -72,7 +74,7 @@ public class ZouniServletContext implements ServletContext {
 	@Override
 	public String getRealPath(String path) {
 		try {
-			return new File(baseFile, path).getCanonicalPath();
+			return new File(pubFile, path).getCanonicalPath();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -134,6 +134,7 @@ public class ViewServlet extends HttpServlet {
 			    	        Method method = classObject.getMethod(key.substring(lastIndex + 1),
 			    	                new Class[] {  });
 			    	        obj = method.invoke(classObject, new Object[] { });
+							writeObject(sos, obj);
 			    		} catch (SecurityException e) {
 			    			e.printStackTrace();
 			    		} catch (NoSuchMethodException e) {

@@ -6,8 +6,10 @@ import java.util.Properties;
 public class Constants {
 
 	//初期設定
-	/** デフォルトディレクトリ */
-    public static String DEFAULT_DIR = "www";
+	/** デフォルト公開ディレクトリ */
+    public static String DEFAULT_PUBLIC = "www";
+	/** デフォルト内部ディレクトリ */
+    public static String DEFAULT_DIR = "page";
     /** デフォルト待ち受けポート番号 */
     public static String DEFAULT_PORT = "8080";
     /** デフォルト接続待ち数 */
