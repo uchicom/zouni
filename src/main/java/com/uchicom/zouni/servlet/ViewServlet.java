@@ -156,6 +156,7 @@ public class ViewServlet extends HttpServlet {
 		}
 	}
 	public void writeObject(ServletOutputStream sos, Object obj) throws IOException {
+		if (obj == null) return;
 		byte[] bytes = null;
 		if (obj instanceof Integer) {
 			bytes = String.valueOf(((Integer) obj).intValue()).getBytes();

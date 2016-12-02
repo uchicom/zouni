@@ -40,8 +40,20 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 			byte[] bytes = new byte[1024 * 4];
 			int length = is.read(bytes);
+
 			if (length != -1) {
 				String str = new String(bytes, 0, length);
+				int contentLengthIndex = str.indexOf("Content-Length:");
+				if (contentLengthIndex >= 0) {
+					int contentLength = Integer.parseInt(str.substring(contentLengthIndex + 16, str.indexOf("\r\n", contentLengthIndex + 16)));
+					int endIndex = str.indexOf("\r\n\r\n");
+					if (endIndex >= 0) {
+						if (length < endIndex + 4 + contentLength) {
+							length = is.read(bytes);
+							str = str + new String(bytes, 0, length);
+						}
+					}
+				}
 				if (str.startsWith("GET")) {
 					this.method = "GET";
 					this.requestUri = str.substring(4, str.indexOf(' ', 4));
