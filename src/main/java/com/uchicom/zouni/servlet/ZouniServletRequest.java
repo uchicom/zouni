@@ -48,6 +48,13 @@ public class ZouniServletRequest implements HttpServletRequest {
 					int contentLength = Integer.parseInt(str.substring(contentLengthIndex + 16, str.indexOf("\r\n", contentLengthIndex + 16)));
 					int endIndex = str.indexOf("\r\n\r\n");
 					if (endIndex >= 0) {
+						String[] heads = str.substring(0, endIndex).split("\r\n");
+						for (int i = 1; i < heads.length; i++) {
+							String[] headValue = heads[i].split(": ");
+							Value value = new Value();
+							value.setParameter(headValue[1]);
+							valueMap.put("header." + headValue[0], value);
+						}
 						if (length < endIndex + 4 + contentLength) {
 							length = is.read(bytes);
 							str = str + new String(bytes, 0, length);
@@ -320,8 +327,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public String getHeader(String name) {
-		// TODO Auto-generated method stub
-		return null;
+		return valueMap.get("header." + name).getParameter();
 	}
 
 	@Override
