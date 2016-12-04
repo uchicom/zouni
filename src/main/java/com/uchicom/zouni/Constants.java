@@ -44,7 +44,7 @@ public class Constants {
 	public static Properties mimeProperties = new Properties();
 	static {
 		try {
-			mimeProperties.load(ClassLoader.getSystemResourceAsStream("com/uchicom/zouni/mime.properties"));
+			mimeProperties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("com/uchicom/zouni/mime.properties"));
 		} catch (IOException e) {
 			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
