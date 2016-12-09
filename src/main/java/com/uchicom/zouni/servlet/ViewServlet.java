@@ -44,7 +44,13 @@ public class ViewServlet extends HttpServlet {
 						}
 						System.out.println(startIndex + ":a" + (index - startIndex));
 						System.out.println(new String(bytes, startIndex, index - startIndex));
-						script.append(new String(bytes, startIndex, index - startIndex));
+						if (bytes[startIndex] == '=') {
+							script.append("out.print(");
+							script.append(new String(bytes, startIndex + 1, index - (startIndex+1)));
+							script.append(");\n");
+						} else {
+							script.append(new String(bytes, startIndex, index - startIndex));
+						}
 						script.append("\n");
 						startIndex = index + 2;
 					} else {
@@ -59,7 +65,7 @@ public class ViewServlet extends HttpServlet {
 									script.append(new String(bytes, startIndex, index - 1 - startIndex).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 									script.append("\");\n");
 								}
-								startIndex = index + 2;
+								startIndex = index + 1;
 							} else {
 								script.append("out.print(\"");
 								System.out.println(startIndex + ":c" + (index - startIndex));
@@ -76,7 +82,14 @@ public class ViewServlet extends HttpServlet {
 					if (program) {
 						System.out.println(startIndex + ":d" + (length - startIndex));
 						System.out.println(new String(bytes, startIndex, length - startIndex));
-						script.append(new String(bytes, startIndex, length - startIndex));
+
+						if (bytes[startIndex] == '=') {
+							script.append("out.print(");
+							script.append(new String(bytes, startIndex + 1, index - (startIndex+1)));
+							script.append(");\n");
+						} else {
+							script.append(new String(bytes, startIndex, index - startIndex));
+						}
 						script.append("\n");
 						//これはエラーだな。
 					} else {
