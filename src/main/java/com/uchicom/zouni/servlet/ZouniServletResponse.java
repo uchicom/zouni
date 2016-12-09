@@ -29,13 +29,11 @@ public class ZouniServletResponse implements HttpServletResponse {
 
 	@Override
 	public PrintWriter getPrintWriter() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return new PrintWriter(os);
 	}
 
 	@Override
 	public void setContentLength(int length) {
-		// TODO Auto-generated method stub
 
 	}
 
