@@ -3,7 +3,6 @@ package com.uchicom.zouni.servlet;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
@@ -33,45 +32,49 @@ public class ZouniServletRequest implements HttpServletRequest {
 	private ByteArrayInputStream bais;
 	public ZouniServletRequest(Socket socket) {
 		this.socket = socket;
-		InputStream is = null;
 		if (socket.isClosed()) return;
 		try {
-			is = socket.getInputStream();
-
-			byte[] bytes = new byte[1024 * 4];
-			int length = is.read(bytes);
-
-			if (length != -1) {
-				String str = new String(bytes, 0, length);
-				int contentLengthIndex = str.indexOf("Content-Length:");
-				if (contentLengthIndex >= 0) {
-					int contentLength = Integer.parseInt(str.substring(contentLengthIndex + 16, str.indexOf("\r\n", contentLengthIndex + 16)));
-					int endIndex = str.indexOf("\r\n\r\n");
-					if (endIndex >= 0) {
-						String[] heads = str.substring(0, endIndex).split("\r\n");
-						for (int i = 1; i < heads.length; i++) {
-							String[] headValue = heads[i].split(": ");
-							Value value = new Value();
-							value.setParameter(headValue[1]);
-							valueMap.put("header." + headValue[0], value);
-						}
-						if (length < endIndex + 4 + contentLength) {
-							length = is.read(bytes);
-							str = str + new String(bytes, 0, length);
-						}
+            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String head = br.readLine();
+			String line = br.readLine();
+			StringBuffer sb = new StringBuffer(4*1024);
+			sb.append(head);
+			while(line != null && !"".equals(line)) {
+				String[] headValue = line.split(": ");
+				Value value = new Value();
+				value.setParameter(headValue[1]);
+				valueMap.put("header." + headValue[0], value);
+				sb.append(line);
+				sb.append("\r\n");
+				line = br.readLine();
+			}
+			if (sb.length() > 0) {
+				sb.append("\r\n");
+				Value cl = valueMap.get("header.Content-Length");
+				if (cl != null) {
+					int contentLength = Integer.parseInt(cl.getParameter());
+					char[] chars = new char[contentLength];
+					int length = 0;
+					int index = 0;
+					while ((length = br.read(chars, index, chars.length - index)) > 0 && index < chars.length) {
+						index += length;
 					}
+					sb.append(chars);
 				}
-				if (str.startsWith("GET")) {
+				String str = sb.toString();
+				System.out.println(str);
+				String[] heads = head.split(" ");
+				if (heads[0].equals("GET")) {
 					this.method = "GET";
-					this.requestUri = str.substring(4, str.indexOf(' ', 4));
+					this.requestUri = heads[1];
 					int uriSeparatorIndex = requestUri.indexOf("?");
 					if (uriSeparatorIndex >= 0) {
 						setParameters(this.requestUri.substring(uriSeparatorIndex + 1));
 						this.requestUri = this.requestUri.substring(0, uriSeparatorIndex);
 					}
-				} else if (str.startsWith("POST")) {
+				} else if (heads[0].equals("POST")) {
 					this.method = "POST";
-					this.requestUri = str.substring(5, str.indexOf(' ', 5));
+					this.requestUri = heads[1];
 					int startIndex = str.indexOf("\r\n\r\n") + 4;
 					int lastIndex = str.indexOf("\r\n", startIndex);
 					//multipart未対応
@@ -83,11 +86,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 					//Reader作成
 					bais = new ByteArrayInputStream(str.substring(startIndex).getBytes());
 				}
-				int index = str.indexOf("Accept-Encoding:");
-				if (index >= 0) {
-					int lastIndex = str.indexOf("\r\n", index);
-					System.out.println("[" + str.substring(index + 16, lastIndex) + "]");
-					for (String enc : str.substring(index + 16, lastIndex).trim().split("[ ,]+")) {
+				Value ae = valueMap.get("header.Accept-Encoding");
+				if (ae != null) {
+					System.out.println("[" + ae.getParameter() + "]");
+					for (String enc : ae.getParameter().trim().split("[ ,]+")) {
 						if (!gzip && "gzip".equals(enc)) {
 							gzip = true;
 						} else if (!deflate && "deflate".equals(enc)){
@@ -95,11 +97,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 						}
 					}
 				}
-				index = str.indexOf("Cookie:");
-				if (index >= 0) {
-					int lastIndex = str.indexOf("\r\n", index);
-					System.out.println("[" + str.substring(index + 7, lastIndex) + "]");
-					for (String cookie : str.substring(index + 7, lastIndex).trim().split(";")) {
+				Value cv = valueMap.get("header.Cookie");
+				if (cv != null) {
+					System.out.println("[" + cv.getParameter() + "]");
+					for (String cookie : cv.getParameter().trim().split(";")) {
 						System.out.println("Cookie:" + cookie);
 						String[] keyValue = cookie.split("=");
 						if (keyValue[0].equals("JSESSIONID")) {
