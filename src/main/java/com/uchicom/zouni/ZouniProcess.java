@@ -123,7 +123,7 @@ public class ZouniProcess implements ServerProcess {
 						servlet.service(req, res);
 					} catch (ServletException e) {
 						try (OutputStream os = socket.getOutputStream();) {
-							error404(os);
+							error500(os);
 						}
 						throw e;
 					}
@@ -208,6 +208,17 @@ public class ZouniProcess implements ServerProcess {
 		os.write(Constants.RES_SERVER);
 		os.write(Constants.RES_LINE_END);
 		os.write(Constants.RES_404_HTML);
+		os.flush();
+	}
+	public static void error500(OutputStream os) throws IOException {
+		os.write(Constants.RES_500);
+		os.write(Constants.RES_CONTENT_TYPE);
+		os.write(Constants.RES_CONTENT_LENGTH);
+		os.write(Constants.RES_500_HTML_LENGTH);
+		os.write(Constants.RES_LINE_END);
+		os.write(Constants.RES_SERVER);
+		os.write(Constants.RES_LINE_END);
+		os.write(Constants.RES_500_HTML);
 		os.flush();
 	}
 }
