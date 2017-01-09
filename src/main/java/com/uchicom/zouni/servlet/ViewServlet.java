@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -43,13 +44,13 @@ public class ViewServlet extends HttpServlet {
 							prev = bytes[index + 1];
 						}
 						System.out.println(startIndex + ":a" + (index - startIndex));
-						System.out.println(new String(bytes, startIndex, index - startIndex));
+						System.out.println(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						if (bytes[startIndex] == '=') {
 							script.append("out.print(");
-							script.append(new String(bytes, startIndex + 1, index - (startIndex+1)));
+							script.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
 							script.append(");\n");
 						} else {
-							script.append(new String(bytes, startIndex, index - startIndex));
+							script.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						}
 						script.append("\n");
 						startIndex = index + 2;
@@ -61,16 +62,16 @@ public class ViewServlet extends HttpServlet {
 								if (index != 1) {
 									script.append("out.print(\"");
 									System.out.println(startIndex + ":b" + (index - 1 - startIndex));
-									System.out.println(new String(bytes, startIndex, index - 1 - startIndex).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-									script.append(new String(bytes, startIndex, index - 1 - startIndex).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+									System.out.println(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+									script.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 									script.append("\");\n");
 								}
 								startIndex = index + 1;
 							} else {
 								script.append("out.print(\"");
 								System.out.println(startIndex + ":c" + (index - startIndex));
-								System.out.println(new String(bytes, startIndex, index - startIndex + 1).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-								script.append(new String(bytes, startIndex, index - startIndex + 1).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+								System.out.println(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+								script.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 								script.append("\");\n");
 								startIndex = index + 1;
 							}
@@ -81,22 +82,22 @@ public class ViewServlet extends HttpServlet {
 				if (startIndex < length - 1) {
 					if (program) {
 						System.out.println(startIndex + ":d" + (length - startIndex));
-						System.out.println(new String(bytes, startIndex, length - startIndex));
+						System.out.println(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")));
 
 						if (bytes[startIndex] == '=') {
 							script.append("out.print(");
-							script.append(new String(bytes, startIndex + 1, index - (startIndex+1)));
+							script.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
 							script.append(");\n");
 						} else {
-							script.append(new String(bytes, startIndex, index - startIndex));
+							script.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						}
 						script.append("\n");
 						//これはエラーだな。
 					} else {
 						script.append("out.print(\"");
 						System.out.println(startIndex + ":e" + (length - startIndex));
-						System.out.println(new String(bytes, startIndex, length - startIndex).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-						script.append(new String(bytes, startIndex, length - startIndex).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+						System.out.println(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+						script.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 						script.append("\");\n");
 					}
 				}

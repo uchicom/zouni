@@ -2,7 +2,9 @@ package com.uchicom.zouni.servlet;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 import javax.servlet.ServletOutputStream;
@@ -29,7 +31,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 
 	@Override
 	public PrintWriter getPrintWriter() throws IOException {
-		return new PrintWriter(os);
+		return new PrintWriter(new OutputStreamWriter(os, Charset.availableCharsets().get("utf-8")));
 	}
 
 	@Override
