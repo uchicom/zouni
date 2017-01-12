@@ -26,7 +26,7 @@ public class ViewServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private StringBuffer script = new StringBuffer();
+	private String script;
 	public ViewServlet(File templateFile) throws FileNotFoundException, IOException {
 		//ここで解析して保持
 		try (FileInputStream fis = new FileInputStream(templateFile);) {
@@ -34,6 +34,7 @@ public class ViewServlet extends HttpServlet {
 			int length = 0;
 			boolean program = false;
 			byte prev = 0;
+			StringBuffer scriptBuff = new StringBuffer(4 * 1058);
 			while ((length = fis.read(bytes)) > 0) {
 				int startIndex = 0;
 				int index = -1;
@@ -43,16 +44,14 @@ public class ViewServlet extends HttpServlet {
 						if (index != length - 1) {
 							prev = bytes[index + 1];
 						}
-						System.out.println(startIndex + ":a" + (index - startIndex));
-						System.out.println(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						if (bytes[startIndex] == '=') {
-							script.append("out.print(");
-							script.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
-							script.append(");\n");
+							scriptBuff.append("out.print(");
+							scriptBuff.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(");\n");
 						} else {
-							script.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						}
-						script.append("\n");
+						scriptBuff.append("\n");
 						startIndex = index + 2;
 					} else {
 						if (index != 0) {
@@ -60,19 +59,15 @@ public class ViewServlet extends HttpServlet {
 							if (prev == '<') {
 								program = true;
 								if (index != 1) {
-									script.append("out.print(\"");
-									System.out.println(startIndex + ":b" + (index - 1 - startIndex));
-									System.out.println(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-									script.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-									script.append("\");\n");
+									scriptBuff.append("out.print(\"");
+									scriptBuff.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+									scriptBuff.append("\");\n");
 								}
 								startIndex = index + 1;
 							} else {
-								script.append("out.print(\"");
-								System.out.println(startIndex + ":c" + (index - startIndex));
-								System.out.println(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-								script.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-								script.append("\");\n");
+								scriptBuff.append("out.print(\"");
+								scriptBuff.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+								scriptBuff.append("\");\n");
 								startIndex = index + 1;
 							}
 						}
@@ -81,30 +76,25 @@ public class ViewServlet extends HttpServlet {
 				//最後の文字列改修
 				if (startIndex < length - 1) {
 					if (program) {
-						System.out.println(startIndex + ":d" + (length - startIndex));
-						System.out.println(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")));
 
 						if (bytes[startIndex] == '=') {
-							script.append("out.print(");
-							script.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
-							script.append(");\n");
+							scriptBuff.append("out.print(");
+							scriptBuff.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(");\n");
 						} else {
-							script.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
 						}
-						script.append("\n");
+						scriptBuff.append("\n");
 						//これはエラーだな。
 					} else {
-						script.append("out.print(\"");
-						System.out.println(startIndex + ":e" + (length - startIndex));
-						System.out.println(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-						script.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-						script.append("\");\n");
+						scriptBuff.append("out.print(\"");
+						scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+						scriptBuff.append("\");\n");
 					}
 				}
 			}
-			script.append("out.flush();\n");
-			System.out.println(script);
-
+			scriptBuff.append("out.flush();\n");
+			script = scriptBuff.toString().replace("\\",  "\\\\");
 		}
 	}
 	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
@@ -124,7 +114,7 @@ public class ViewServlet extends HttpServlet {
 			se.put("request", req);
 			se.put("session", req.getSession());
 			se.put("response", res);
-			se.eval(script.toString());
+			se.eval(script);
 		} catch (ScriptException e) {
 			e.printStackTrace();
 			throw new ServletException(e);
