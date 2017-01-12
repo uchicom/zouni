@@ -60,13 +60,13 @@ public class ViewServlet extends HttpServlet {
 								program = true;
 								if (index != 1) {
 									scriptBuff.append("out.print(\"");
-									scriptBuff.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+									scriptBuff.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 									scriptBuff.append("\");\n");
 								}
 								startIndex = index + 1;
 							} else {
 								scriptBuff.append("out.print(\"");
-								scriptBuff.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+								scriptBuff.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 								scriptBuff.append("\");\n");
 								startIndex = index + 1;
 							}
@@ -88,13 +88,13 @@ public class ViewServlet extends HttpServlet {
 						//これはエラーだな。
 					} else {
 						scriptBuff.append("out.print(\"");
-						scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+						scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 						scriptBuff.append("\");\n");
 					}
 				}
 			}
 			scriptBuff.append("out.flush();\n");
-			script = scriptBuff.toString().replace("\\",  "\\\\");
+			script = scriptBuff.toString();
 		}
 	}
 	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
