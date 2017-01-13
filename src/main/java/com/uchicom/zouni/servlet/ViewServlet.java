@@ -36,6 +36,7 @@ public class ViewServlet extends HttpServlet {
 			byte prev = 0;
 			StringBuffer scriptBuff = new StringBuffer(4 * 1058);
 			while ((length = fis.read(bytes)) > 0) {
+				System.out.println("length:=" + length);
 				int startIndex = 0;
 				int index = -1;
 				while ((index = indexOf(bytes, startIndex, length - 1, (byte)'%')) >= 0) {
@@ -76,13 +77,13 @@ public class ViewServlet extends HttpServlet {
 				//最後の文字列改修
 				if (startIndex < length - 1) {
 					if (program) {
-
+						System.out.println(startIndex + ":" + length + ":" + bytes.length);
 						if (bytes[startIndex] == '=') {
 							scriptBuff.append("out.print(");
-							scriptBuff.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(new String(bytes, startIndex + 1, length - (startIndex + 1), Charset.availableCharsets().get("utf-8")));
 							scriptBuff.append(");\n");
 						} else {
-							scriptBuff.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
+							scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")));
 						}
 						scriptBuff.append("\n");
 						//これはエラーだな。
@@ -95,6 +96,7 @@ public class ViewServlet extends HttpServlet {
 			}
 			scriptBuff.append("out.flush();\n");
 			script = scriptBuff.toString();
+			System.out.println(script);
 		}
 	}
 	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
