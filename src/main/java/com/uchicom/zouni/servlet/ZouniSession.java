@@ -90,6 +90,7 @@ public class ZouniSession implements HttpSession {
 
 	@Override
 	public void invalidate() {
+		attributeMap.clear();
 		ZouniServletContext.getInstance().removeSession(this);
 		id = null;
 	}

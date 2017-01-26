@@ -1,9 +1,12 @@
 package com.uchicom.zouni;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class Constants {
+
+	public static DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
 
 	//初期設定
 	/** デフォルト公開ディレクトリ */

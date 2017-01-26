@@ -31,58 +31,71 @@ public class ViewServlet extends HttpServlet {
 	public ViewServlet(File templateFile) throws FileNotFoundException, IOException {
 		//ここで解析して保持
 		try (FileInputStream fis = new FileInputStream(templateFile);) {
-			byte[] bytes = new byte[1024 * 4];
 			ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 4);
 			int length = 0;
 			boolean program = false;
 			byte prev = 0;
 			StringBuffer scriptBuff = new StringBuffer(4 * 1058);
+			int startIndex = 0;
+			byte[] bytes = new byte[1024 * 4];
 			while ((length = fis.read(bytes)) > 0) {
-				int startIndex = 0;
-				int index = -1;
-				if (baos.size() > 0) {
-					baos.write(bytes, 0, length);
-					bytes = baos.toByteArray();
-					baos.reset();
-				}
-				while ((index = indexOf(bytes, startIndex, length - 1, (byte)'%')) >= 0) {
-					if (program) {
-						program = false;
-						if (index != length - 1) {
-							prev = bytes[index + 1];
-						}
-						if (bytes[startIndex] == '=') {
-							scriptBuff.append("out.print(");
-							scriptBuff.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
-							scriptBuff.append(");\n");
-						} else {
-							scriptBuff.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
-						}
-						scriptBuff.append("\n");
-						startIndex = index + 2;
+				baos.write(bytes, 0, length);
+			}
+			bytes = baos.toByteArray();
+			length = baos.size();
+			int index = -1;
+			while ((index = indexOf(bytes, startIndex, length - 1, (byte)'%')) >= 0) {
+				if (program) {
+					program = false;
+					if (index != length - 1) {
+						prev = bytes[index + 1];
+					}
+					if (bytes[startIndex] == '=') {
+						scriptBuff.append("out.print(");
+						scriptBuff.append(new String(bytes, startIndex + 1, index - (startIndex+1), Charset.availableCharsets().get("utf-8")));
+						scriptBuff.append(");\n");
 					} else {
-						if (index != 0) {
-							prev = bytes[index - 1];
-							if (prev == '<') {
-								program = true;
-								if (index != 1) {
-									scriptBuff.append("out.print(\"");
-									scriptBuff.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
-									scriptBuff.append("\");\n");
-								}
-								startIndex = index + 1;
-							} else {
+						scriptBuff.append(new String(bytes, startIndex, index - startIndex, Charset.availableCharsets().get("utf-8")));
+					}
+					scriptBuff.append("\n");
+					startIndex = index + 2;
+				} else {
+					if (index != 0) {
+						prev = bytes[index - 1];
+						if (prev == '<') {
+							program = true;
+							if (index != 1) {
 								scriptBuff.append("out.print(\"");
-								scriptBuff.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+								scriptBuff.append(new String(bytes, startIndex, index - 1 - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
 								scriptBuff.append("\");\n");
-								startIndex = index + 1;
 							}
+							startIndex = index + 1;
+						} else {
+							scriptBuff.append("out.print(\"");
+							scriptBuff.append(new String(bytes, startIndex, index - startIndex + 1, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+							scriptBuff.append("\");\n");
+							startIndex = index + 1;
 						}
 					}
 				}
-				//最後の文字列改修
-				if (startIndex < length - 1) {
-					baos.write(bytes, startIndex, length - startIndex);
+			}
+		//最後の文字列改修
+			if (startIndex < length - 1) {
+				if (program) {
+					System.out.println(startIndex + ":" + length + ":" + bytes.length);
+					if (bytes[startIndex] == '=') {
+						scriptBuff.append("out.print(");
+						scriptBuff.append(new String(bytes, startIndex + 1, length - (startIndex + 1), Charset.availableCharsets().get("utf-8")));
+						scriptBuff.append(");\n");
+					} else {
+						scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")));
+					}
+					scriptBuff.append("\n");
+					//これはエラーだな。
+				} else {
+					scriptBuff.append("out.print(\"");
+					scriptBuff.append(new String(bytes, startIndex, length - startIndex, Charset.availableCharsets().get("utf-8")).replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r"));
+					scriptBuff.append("\");\n");
 				}
 			}
 			scriptBuff.append("out.flush();\n");

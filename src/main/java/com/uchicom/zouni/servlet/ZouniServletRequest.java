@@ -100,12 +100,14 @@ public class ZouniServletRequest implements HttpServletRequest {
 				Value cv = valueMap.get("header.Cookie");
 				if (cv != null) {
 					System.out.println("[" + cv.getParameter() + "]");
-					for (String cookie : cv.getParameter().trim().split(";")) {
+					for (String cookie : cv.getParameter().split(";")) {
 						System.out.println("Cookie:" + cookie);
-						String[] keyValue = cookie.split("=");
+						String[] keyValue = cookie.trim().split("=");
 						if (keyValue[0].equals("JSESSIONID")) {
 							System.out.println("JSESSIONID:" + cookie);
-							this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
+							if (session == null) {
+								this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
+							}
 							System.out.println("session:" +  session);
 						}
 					}

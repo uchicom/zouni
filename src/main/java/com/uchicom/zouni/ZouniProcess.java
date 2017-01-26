@@ -25,6 +25,7 @@ import com.uchicom.zouni.servlet.ZouniServletResponse;
 
 public class ZouniProcess implements ServerProcess {
 	private static DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("Z"));
+	private String host;
 	private Socket socket;
 	private String servletPackage;
 	private File pubDir;
@@ -33,6 +34,7 @@ public class ZouniProcess implements ServerProcess {
 		this.socket = socket;
 		this.servletPackage = parameter.get("package");
 		this.pubDir = parameter.getFile("public");
+		this.host = parameter.get("host");
 		this.map = ZouniServletContext.getInstance().getServletMap();
 	}
 
@@ -152,7 +154,31 @@ public class ZouniProcess implements ServerProcess {
 							System.out.println("クッキーあり");
 							os.write(Constants.SET_COOKIE);
 							os.write(Constants.JSESSIONID);
+							os.write("; Expires=".getBytes());
+							os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
+							os.write(Constants.RES_LINE_END);
+
+							os.write(Constants.SET_COOKIE);
+							os.write(Constants.JSESSIONID);
 							os.write(req.getSession().getId().getBytes());
+							os.write("; Domain=".getBytes());
+							os.write(this.host.getBytes());
+							os.write("; Expires=".getBytes());
+							os.write(Constants.formatter.format(OffsetDateTime.now().plusDays(1)).getBytes());
+							os.write(Constants.RES_LINE_END);
+						} else {
+							System.out.println("クッキーなし");
+							os.write(Constants.SET_COOKIE);
+							os.write(Constants.JSESSIONID);
+							os.write("; Expires=".getBytes());
+							os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
+							os.write(Constants.RES_LINE_END);
+							os.write(Constants.SET_COOKIE);
+							os.write(Constants.JSESSIONID);
+							os.write("; Domain=".getBytes());
+							os.write(this.host.getBytes());
+							os.write("; Expires=".getBytes());
+							os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
 							os.write(Constants.RES_LINE_END);
 						}
 						os.write(Constants.RES_LINE_END);
