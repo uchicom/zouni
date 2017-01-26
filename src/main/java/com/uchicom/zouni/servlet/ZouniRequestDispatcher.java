@@ -27,10 +27,6 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 	ZipInputStream zis;
 	@Override
 	public void forward(ServletRequest req, ServletResponse res) throws ServletException, IOException {
-//		long start = System.currentTimeMillis();
-//	      System.out.println("memory used :" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-//	      System.out.println("memory total:" + Runtime.getRuntime().totalMemory());
-//	      System.out.println("memory max  :" + Runtime.getRuntime().maxMemory());
 		if (name.endsWith(".jsp")) {
 			//解析した結果を保持する
 			Servlet servlet = getServlet(name);
@@ -47,11 +43,6 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 			//サーブレット呼び出し.
 
 		}
-//		System.out.println(name + ":" + (System.currentTimeMillis() - start));
-//
-//		System.out.println("memory used :" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-//		System.out.println("memory total:" + Runtime.getRuntime().totalMemory());
-//		System.out.println("memory max  :" + Runtime.getRuntime().maxMemory());
 	}
 
 	@Override

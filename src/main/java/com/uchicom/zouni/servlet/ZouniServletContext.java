@@ -177,7 +177,6 @@ public class ZouniServletContext implements ServletContext {
 
 	}
 	public ZouniSession getSession(String key) {
-		System.out.println(sessionMap);
 		return sessionMap.get(key);
 	}
 	public ZouniSession createSession() {

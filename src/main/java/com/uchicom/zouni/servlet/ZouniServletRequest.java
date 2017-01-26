@@ -62,7 +62,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 					sb.append(chars);
 				}
 				String str = sb.toString();
-				System.out.println(str);
 				String[] heads = head.split(" ");
 				if (heads[0].equals("GET")) {
 					this.method = "GET";
@@ -88,7 +87,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 				}
 				Value ae = valueMap.get("header.Accept-Encoding");
 				if (ae != null) {
-					System.out.println("[" + ae.getParameter() + "]");
 					for (String enc : ae.getParameter().trim().split("[ ,]+")) {
 						if (!gzip && "gzip".equals(enc)) {
 							gzip = true;
@@ -99,20 +97,15 @@ public class ZouniServletRequest implements HttpServletRequest {
 				}
 				Value cv = valueMap.get("header.Cookie");
 				if (cv != null) {
-					System.out.println("[" + cv.getParameter() + "]");
 					for (String cookie : cv.getParameter().split(";")) {
-						System.out.println("Cookie:" + cookie);
 						String[] keyValue = cookie.trim().split("=");
 						if (keyValue[0].equals("JSESSIONID")) {
-							System.out.println("JSESSIONID:" + cookie);
 							if (session == null) {
 								this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
 							}
-							System.out.println("session:" +  session);
 						}
 					}
 				}
-				System.out.println(str);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -435,7 +428,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public HttpSession getSession() {
-		System.out.println(session);
 		return session;
 	}
 

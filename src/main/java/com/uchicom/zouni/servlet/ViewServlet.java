@@ -82,7 +82,6 @@ public class ViewServlet extends HttpServlet {
 		//最後の文字列改修
 			if (startIndex < length - 1) {
 				if (program) {
-					System.out.println(startIndex + ":" + length + ":" + bytes.length);
 					if (bytes[startIndex] == '=') {
 						scriptBuff.append("out.print(");
 						scriptBuff.append(new String(bytes, startIndex + 1, length - (startIndex + 1), Charset.availableCharsets().get("utf-8")));
@@ -100,7 +99,6 @@ public class ViewServlet extends HttpServlet {
 			}
 			scriptBuff.append("out.flush();\n");
 			script = scriptBuff.toString();
-			System.out.println(script);
 
 		}
 	}

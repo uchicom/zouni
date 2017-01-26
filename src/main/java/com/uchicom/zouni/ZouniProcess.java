@@ -67,7 +67,6 @@ public class ZouniProcess implements ServerProcess {
 						} else {
 							file = new File(pubDir, req.getRequestURI().substring(1));
 						}
-						System.out.println(file.getCanonicalPath());
 
 						if (file.exists()) {
 							if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
@@ -91,7 +90,6 @@ public class ZouniProcess implements ServerProcess {
 							}
 
 							Class<?> clazz = Class.forName(className);
-	//						System.out.println(className);
 							servlet = (HttpServlet)clazz.newInstance();
 						}
 						if (servlet != null) {
@@ -151,7 +149,6 @@ public class ZouniProcess implements ServerProcess {
 						os.write(Constants.RES_LINE_END);
 						os.write(Constants.RES_SERVER);
 						if (req.getSession() != null && req.getSession().getId() != null) {
-							System.out.println("クッキーあり");
 							os.write(Constants.SET_COOKIE);
 							os.write(Constants.JSESSIONID);
 							os.write("; Expires=".getBytes());
@@ -167,7 +164,6 @@ public class ZouniProcess implements ServerProcess {
 							os.write(Constants.formatter.format(OffsetDateTime.now().plusDays(1)).getBytes());
 							os.write(Constants.RES_LINE_END);
 						} else {
-							System.out.println("クッキーなし");
 							os.write(Constants.SET_COOKIE);
 							os.write(Constants.JSESSIONID);
 							os.write("; Expires=".getBytes());
@@ -182,7 +178,6 @@ public class ZouniProcess implements ServerProcess {
 							os.write(Constants.RES_LINE_END);
 						}
 						os.write(Constants.RES_LINE_END);
-						System.out.println("baos:" + baos.size());
 						os.write(baos.toByteArray());
 						os.flush();
 					}
