@@ -116,25 +116,27 @@ public class ZouniServletRequest implements HttpServletRequest {
 		for (String split : parameters.split("&")) {
 			int index = split.indexOf("=");
 			if (index > 0) {
-				String key = split.substring(0, index);
+				String key = "param." + split.substring(0, index);
 				if (index == split.length() - 1) {
-					valueMap.put("param." + key, null);
+					valueMap.put(key, null);
 				} else {
-					if (valueMap.containsKey("param." + key)) {
-						Value value = valueMap.get("param." + key);
+					String val = split.substring(index + 1);
+					if (valueMap.containsKey(key)) {
+						Value value = valueMap.get(key);
 						if (value != null) {
 							if (value.getParameters() == null) {
-								List<String> list = new ArrayList<String>();
+								List<String> list = new ArrayList<>();
 								list.add(value.getParameter());
-								list.add(split.substring(index + 1));
+								list.add(val);
+								value.setParameters(list);
 							} else {
-								value.getParameters().add(split.substring(index + 1));
+								value.getParameters().add(val);
 							}
 						}
 					} else {
 						Value value = new Value();
-						value.setParameter(split.substring(index + 1));
-						valueMap.put("param." + key, value);
+						value.setParameter(val);
+						valueMap.put(key, value);
 					}
 				}
 			}
