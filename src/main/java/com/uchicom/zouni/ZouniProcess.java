@@ -49,6 +49,7 @@ public class ZouniProcess implements ServerProcess {
 				} else {
 					try {
 						String className = null;
+						//リクエスト対象のファイルを探す
 						File file = null;
 						if (req.getRequestURI().endsWith("/")) {
 							File dir = null;
@@ -69,14 +70,18 @@ public class ZouniProcess implements ServerProcess {
 						}
 
 						if (file.exists()) {
+							//ファイルが存在する場合
 							if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
 								if (file.getCanonicalPath().endsWith(".jsp")) {
+									//JSP出力サーブレット
 									servlet = new ViewServlet(file);
 								} else {
+									//ファイル出力サーブレット
 									servlet = new FileServlet(file);
 								}
 							}
 						} else {
+							//ファイルが存在しない場合Servletクラスを探す
 							if ("/".equals(req.getRequestURI())) {
 								className = servletPackage + ".IndexServlet";
 							} else if (req.getRequestURI().endsWith("/")) {
