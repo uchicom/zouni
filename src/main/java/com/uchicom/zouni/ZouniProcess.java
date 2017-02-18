@@ -44,8 +44,9 @@ public class ZouniProcess implements ServerProcess {
 			ZouniServletRequest req = new ZouniServletRequest(socket);
 			if ("GET".equals(req.getMethod()) || "POST".equals(req.getMethod())) {
 				Servlet servlet = null;
-				if (map.containsKey(req.getRequestURI())) {
-					servlet = map.get(req.getRequestURI());
+				String key = "pub." + req.getRequestURI();
+				if (map.containsKey(key)) {
+					servlet = map.get(key);
 				} else {
 					try {
 						String className = null;
@@ -98,9 +99,9 @@ public class ZouniProcess implements ServerProcess {
 							servlet = (HttpServlet)clazz.newInstance();
 						}
 						if (servlet != null) {
-							map.put(req.getRequestURI(), servlet);
+							map.put(key, servlet);
 						} else {
-							map.put(req.getRequestURI(), null);
+							map.put(key, null);
 						}
 					} catch (ClassNotFoundException e) {
 						// TODO Auto-generated catch block

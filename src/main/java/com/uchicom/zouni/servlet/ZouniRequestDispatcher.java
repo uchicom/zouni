@@ -50,12 +50,18 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 
 	}
 	private Servlet getServlet(String name) throws FileNotFoundException, IOException {
+		String key = null;
+		if (name.charAt(0) == '/') {
+			key = "dir." + name;
+		} else {
+			key = "dir./" + name;
+		}
 		Servlet servlet = null;
-		if (servletMap.containsKey(name)) {
-			servlet = servletMap.get(name);
+		if (servletMap.containsKey(key)) {
+			servlet = servletMap.get(key);
 		} else {
 			servlet = new ViewServlet(new File(baseFile, name));
-			servletMap.put(name, servlet);
+			servletMap.put(key, servlet);
 		}
 		return servlet;
 	}

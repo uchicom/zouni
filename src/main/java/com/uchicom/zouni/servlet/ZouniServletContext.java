@@ -34,8 +34,8 @@ public class ZouniServletContext implements ServletContext {
 	private ZouniServletContext(File baseFile, File pubFile) {
 		this.baseFile = baseFile;
 		this.pubFile = pubFile;
-		watch(baseFile);
-		watch(pubFile);
+		watch(baseFile, "dir.");
+		watch(pubFile, "pub.");
 
 	}
 
@@ -207,15 +207,12 @@ public class ZouniServletContext implements ServletContext {
 	 *
 	 * @param baseFile
 	 */
-	private void watch(File baseFile) {
+	private void watch(File baseFile, String keyPrefix) {
 		Thread thread = new Thread(() -> {
-			WatchKey key = null;
-			try {
-				WatchService service = FileSystems.getDefault().newWatchService();
-
+			try (WatchService service = FileSystems.getDefault().newWatchService()) {
 				regist(service, baseFile);
+				WatchKey key = null;
 				while ((key = service.take()) != null) {
-
 					// スレッドの割り込み = 終了要求を判定する. 必要なのか不明
 					if (Thread.currentThread().isInterrupted()) {
 						throw new InterruptedException();
@@ -223,6 +220,7 @@ public class ZouniServletContext implements ServletContext {
 					if (!key.isValid())
 						continue;
 					for (WatchEvent<?> event : key.pollEvents()) {
+						if (StandardWatchEventKinds.OVERFLOW.equals(event.kind())) continue;
 						//eventではファイル名しかとれない
 						Path file = (Path) event.context();
 						//監視対象のフォルダを取得する必要がある
@@ -235,8 +233,8 @@ public class ZouniServletContext implements ServletContext {
 						} else if (StandardWatchEventKinds.ENTRY_DELETE.equals(event.kind()) ||
 								StandardWatchEventKinds.ENTRY_MODIFY.equals(event.kind())) {
 							// 削除時はcancel不要の認識
-							if (servletMap.containsKey(absPath)) {
-								servletMap.remove(absPath);
+							if (servletMap.containsKey(keyPrefix + absPath)) {
+								servletMap.remove(keyPrefix + absPath);
 							}
 						}
 					}
@@ -246,7 +244,6 @@ public class ZouniServletContext implements ServletContext {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				key.cancel();
 			}
 		});
 		thread.setDaemon(false); //mainスレッドと運命を共に
