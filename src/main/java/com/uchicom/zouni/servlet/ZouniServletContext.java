@@ -219,12 +219,14 @@ public class ZouniServletContext implements ServletContext {
 					}
 					if (!key.isValid())
 						continue;
+					Path basePath = pathMap.get(key);
+					if (basePath == null) continue;
 					for (WatchEvent<?> event : key.pollEvents()) {
 						if (StandardWatchEventKinds.OVERFLOW.equals(event.kind())) continue;
 						//eventではファイル名しかとれない
 						Path file = (Path) event.context();
 						//監視対象のフォルダを取得する必要がある
-						Path real = pathMap.get(key).resolve(file);
+						Path real = basePath.resolve(file);
 						String cpath = real.toFile().getCanonicalPath();
 						String bpath = baseFile.getCanonicalPath();
 						String absPath = cpath.substring(bpath.length()).replace('\\', '/');

@@ -29,7 +29,7 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 	public void forward(ServletRequest req, ServletResponse res) throws ServletException, IOException {
 		if (name.endsWith(".jsp")) {
 			//解析した結果を保持する
-			Servlet servlet = getServlet(name);
+			Servlet servlet = getServlet(name, "dir.");
 			servlet.service(req, res);
 		} else if (name.endsWith(".htm")) {
 			//静的ファイル呼び出し
@@ -41,7 +41,8 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 			}
 		} else {
 			//サーブレット呼び出し.
-
+			Servlet servlet = getServlet(name, "pub.");
+			servlet.service(req, res);
 		}
 	}
 
@@ -49,12 +50,12 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 	public void include(ServletRequest req, ServletResponse res) throws ServletException, IOException {
 
 	}
-	private Servlet getServlet(String name) throws FileNotFoundException, IOException {
+	private Servlet getServlet(String name, String keyPrefix) throws FileNotFoundException, IOException {
 		String key = null;
 		if (name.charAt(0) == '/') {
-			key = "dir." + name;
+			key = keyPrefix + name;
 		} else {
-			key = "dir./" + name;
+			key = keyPrefix + "/" + name;
 		}
 		Servlet servlet = null;
 		if (servletMap.containsKey(key)) {
