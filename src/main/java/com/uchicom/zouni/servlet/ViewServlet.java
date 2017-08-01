@@ -27,15 +27,61 @@ public class ViewServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/** スクリプトファイル */
+	private File templateFile;
+	/** 保持スクリプト */
 	private String script;
+	/** 保持スクリプトの最終更新日 */
+	private long lastModified;
+	/**
+	 * コンストラクタ
+	 */
 	public ViewServlet(File templateFile) throws FileNotFoundException, IOException {
 		//ここで解析して保持
+		this.templateFile = templateFile;
+		script = createScript();
+	}
+	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
+		for (int i = fromIndex; i <= toIndex; i++) {
+			if (bytes[i] == value) return i;
+		}
+		return -1;
+	}
+	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		doPost(req, res);
+	}
+	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		try {
+			if (lastModified < templateFile.lastModified()) {
+				script = createScript();
+			}
+			ScriptEngineManager sem = new ScriptEngineManager();
+			ScriptEngine se = sem.getEngineByName("JavaScript");
+			se.put("out", res.getPrintWriter());
+			se.put("request", req);
+			se.put("session", req.getSession());
+			se.put("response", res);
+			se.eval(script);
+		} catch (ScriptException e) {
+			e.printStackTrace();
+			throw new ServletException(e);
+		}
+	}
+
+	/**
+	 * スクリプトを作成する.
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	protected String createScript() throws FileNotFoundException, IOException {
+		lastModified = templateFile.lastModified();
+		StringBuffer scriptBuff = new StringBuffer(4 * 1058);
 		try (FileInputStream fis = new FileInputStream(templateFile);) {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 4);
 			int length = 0;
 			boolean program = false;
 			byte prev = 0;
-			StringBuffer scriptBuff = new StringBuffer(4 * 1058);
 			int startIndex = 0;
 			byte[] bytes = new byte[1024 * 4];
 			while ((length = fis.read(bytes)) > 0) {
@@ -98,31 +144,8 @@ public class ViewServlet extends HttpServlet {
 				}
 			}
 			scriptBuff.append("out.flush();\n");
-			script = scriptBuff.toString();
 
 		}
-	}
-	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
-		for (int i = fromIndex; i <= toIndex; i++) {
-			if (bytes[i] == value) return i;
-		}
-		return -1;
-	}
-	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		doPost(req, res);
-	}
-	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		try {
-			ScriptEngineManager sem = new ScriptEngineManager();
-			ScriptEngine se = sem.getEngineByName("JavaScript");
-			se.put("out", res.getPrintWriter());
-			se.put("request", req);
-			se.put("session", req.getSession());
-			se.put("response", res);
-			se.eval(script);
-		} catch (ScriptException e) {
-			e.printStackTrace();
-			throw new ServletException(e);
-		}
+		return scriptBuff.toString();
 	}
 }
