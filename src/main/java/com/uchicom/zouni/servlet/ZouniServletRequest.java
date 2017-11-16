@@ -220,8 +220,18 @@ public class ZouniServletRequest implements HttpServletRequest {
 	}
 
 	@Override
-	public String getParameterNames() {
-		return null;
+	public String[] getParameterNames() {
+		List<String> parameterNameList = new ArrayList<>(valueMap.size());
+		for (String key : valueMap.keySet()) {
+			if (key.startsWith("param.")) {
+				try {
+					parameterNameList.add(URLDecoder.decode(key.substring(6), "utf-8"));
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return parameterNameList.toArray(new String[0]);
 	}
 
 	@Override

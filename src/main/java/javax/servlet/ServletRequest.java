@@ -19,7 +19,7 @@ public interface ServletRequest {
 	public String getContentType();
 	public ServletInputStream getInputStream() throws IOException;
 	public String getParameter(String name);
-	public String getParameterNames();
+	public String[] getParameterNames();
 	public String[] getParameterValues(String name);
 	public String getProtocol();
 	public String getScheme();
