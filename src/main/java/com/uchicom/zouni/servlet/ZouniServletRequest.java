@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Vector;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletInputStream;
@@ -219,20 +220,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return null;
 	}
 
-	@Override
-	public String[] getParameterNames() {
-		List<String> parameterNameList = new ArrayList<>(valueMap.size());
-		for (String key : valueMap.keySet()) {
-			if (key.startsWith("param.")) {
-				try {
-					parameterNameList.add(URLDecoder.decode(key.substring(6), "utf-8"));
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return parameterNameList.toArray(new String[0]);
-	}
 
 	@Override
 	public String[] getParameterValues(String key) {
@@ -278,11 +265,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 	}
 
 	@Override
-	public String gerServerPort() {
-		return String.valueOf(socket.getLocalPort());
-	}
-
-	@Override
 	public BufferedReader getReader() throws IOException {
 		return new BufferedReader(new InputStreamReader(bais));
 	}
@@ -297,11 +279,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return socket.getInetAddress().getHostName();
 	}
 
-	@Override
-	public Boolean isSecure() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public RequestDispatcher getRequestDispatcher(String path) {
@@ -309,11 +286,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return null;
 	}
 
-	@Override
-	public String getRaelPath() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public String getAuthType() {
@@ -392,12 +364,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 	}
 
 	@Override
-	public Boolean isUserInRole(String role) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Principal getUserPrincipal() {
 		// TODO Auto-generated method stub
 		return null;
@@ -415,17 +381,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return false;
 	}
 
-	@Override
-	public Boolean isRequestedSessionIdFromCookie() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Boolean isRequestedSessionIdFromURL() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public String getRequestURI() {
@@ -443,17 +398,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return session;
 	}
 
-	@Override
-	public HttpSession getSession(Boolean create) {
-		session = ZouniServletContext.getInstance().createSession();
-		return session;
-	}
-
-	@Override
-	public Boolean isRequestSessionIdFromUrl() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 	public boolean isGzip() {
 		return gzip;
 	}
@@ -465,6 +409,141 @@ public class ZouniServletRequest implements HttpServletRequest {
 	}
 	public void setDeflate(boolean deflate) {
 		this.deflate = deflate;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getLocalAddr()
+	 */
+	@Override
+	public String getLocalAddr() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getLocalName()
+	 */
+	@Override
+	public String getLocalName() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getLocalPort()
+	 */
+	@Override
+	public int getLocalPort() {
+		// TODO 自動生成されたメソッド・スタブ
+		return 0;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getParameterMap()
+	 */
+	@Override
+	public Map getParameterMap() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getParameterNames()
+	 */
+	@Override
+	public Enumeration<?> getParameterNames() {
+		Vector<String> parameterNameList = new Vector<>(valueMap.size());
+		for (String key : valueMap.keySet()) {
+			if (key.startsWith("param.")) {
+				try {
+					parameterNameList.add(URLDecoder.decode(key.substring(6), "utf-8"));
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return parameterNameList.elements();
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getRealPath(java.lang.String)
+	 */
+	@Override
+	public String getRealPath(String arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getRemotePort()
+	 */
+	@Override
+	public int getRemotePort() {
+		// TODO 自動生成されたメソッド・スタブ
+		return 0;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#getServerPort()
+	 */
+	@Override
+	public int getServerPort() {
+		return socket.getLocalPort();
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#isSecure()
+	 */
+	@Override
+	public boolean isSecure() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletRequest#setCharacterEncoding(java.lang.String)
+	 */
+	@Override
+	public void setCharacterEncoding(String arg0) throws UnsupportedEncodingException {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getRequestURL()
+	 */
+	@Override
+	public StringBuffer getRequestURL() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
+	 */
+	@Override
+	public HttpSession getSession(boolean arg0) {
+		return ZouniServletContext.getInstance().createSession();
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
+	 */
+	@Override
+	public boolean isRequestedSessionIdFromCookie() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
+	 */
+	@Override
+	public boolean isRequestedSessionIdFromURL() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
+	 */
+	@Override
+	public boolean isRequestedSessionIdFromUrl() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isUserInRole(java.lang.String)
+	 */
+	@Override
+	public boolean isUserInRole(String arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
 	}
 
 }

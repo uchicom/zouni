@@ -16,6 +16,7 @@ import java.nio.file.WatchService;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.RequestDispatcher;
@@ -271,6 +272,33 @@ public class ZouniServletContext implements ServletContext {
 				regist(service, child);
 			}
 		}
+	}
+
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletContext#getContextPath()
+	 */
+	@Override
+	public String getContextPath() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletContext#getResourcePaths(java.lang.String)
+	 */
+	@Override
+	public Set getResourcePaths(String arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletContext#getServletContextName()
+	 */
+	@Override
+	public String getServletContextName() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
 	}
 
 }

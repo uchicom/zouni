@@ -57,7 +57,7 @@ public class ViewServlet extends HttpServlet {
 			}
 			ScriptEngineManager sem = new ScriptEngineManager();
 			ScriptEngine se = sem.getEngineByName("JavaScript");
-			se.put("out", res.getPrintWriter());
+			se.put("out", res.getWriter());
 			se.put("request", req);
 			se.put("session", req.getSession());
 			se.put("response", res);

@@ -30,7 +30,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 	}
 
 	@Override
-	public PrintWriter getPrintWriter() throws IOException {
+	public PrintWriter getWriter() throws IOException {
 		return new PrintWriter(new OutputStreamWriter(os, Charset.availableCharsets().get("utf-8")));
 	}
 
@@ -63,13 +63,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 		// TODO Auto-generated method stub
 
 	}
-
-	@Override
-	public Boolean isComitted() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	public void flushBuffer() throws IOException {
 		// TODO Auto-generated method stub
@@ -94,11 +88,6 @@ public class ZouniServletResponse implements HttpServletResponse {
 
 	}
 
-	@Override
-	public Boolean containsHeader(String name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public String encodeURL(String url) {
@@ -188,6 +177,38 @@ public class ZouniServletResponse implements HttpServletResponse {
 	public String encodeRedirectUrl(String url) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletResponse#isCommitted()
+	 */
+	@Override
+	public boolean isCommitted() {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletResponse#resetBuffer()
+	 */
+	@Override
+	public void resetBuffer() {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.ServletResponse#setCharacterEncoding(java.lang.String)
+	 */
+	@Override
+	public void setCharacterEncoding(String arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpServletResponse#containsHeader(java.lang.String)
+	 */
+	@Override
+	public boolean containsHeader(String arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		return false;
 	}
 
 }

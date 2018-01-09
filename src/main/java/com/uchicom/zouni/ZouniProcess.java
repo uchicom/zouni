@@ -15,8 +15,8 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
-import com.uchicom.server.Parameter;
 import com.uchicom.server.ServerProcess;
+import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ViewServlet;
 import com.uchicom.zouni.servlet.ZouniServletContext;

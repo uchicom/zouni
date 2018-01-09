@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionContext;
 
@@ -127,6 +128,14 @@ public class ZouniSession implements HttpSession {
 	@Deprecated
 	public HttpSessionContext getSessionContext() {
 		// TODO Auto-generated method stub
+		return null;
+	}
+	/* (非 Javadoc)
+	 * @see javax.servlet.http.HttpSession#getServletContext()
+	 */
+	@Override
+	public ServletContext getServletContext() {
+		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
 
