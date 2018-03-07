@@ -33,6 +33,8 @@ public class ViewServlet extends HttpServlet {
 	private String script;
 	/** 保持スクリプトの最終更新日 */
 	private long lastModified;
+	
+	private ScriptEngine se;
 	/**
 	 * コンストラクタ
 	 */
@@ -40,6 +42,9 @@ public class ViewServlet extends HttpServlet {
 		//ここで解析して保持
 		this.templateFile = templateFile;
 		script = createScript();
+
+		ScriptEngineManager sem = new ScriptEngineManager();
+		se = sem.getEngineByName("JavaScript");
 	}
 	private int indexOf(byte[] bytes, int fromIndex, int toIndex, byte value) {
 		for (int i = fromIndex; i <= toIndex; i++) {
@@ -55,8 +60,6 @@ public class ViewServlet extends HttpServlet {
 			if (lastModified < templateFile.lastModified()) {
 				script = createScript();
 			}
-			ScriptEngineManager sem = new ScriptEngineManager();
-			ScriptEngine se = sem.getEngineByName("JavaScript");
 			se.put("out", res.getWriter());
 			se.put("request", req);
 			se.put("session", req.getSession());
