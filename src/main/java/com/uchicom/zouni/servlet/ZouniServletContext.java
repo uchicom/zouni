@@ -74,6 +74,7 @@ public class ZouniServletContext implements ServletContext {
 			rd = rdMap.get(name);
 		} else {
 			rd = new ZouniRequestDispatcher(name, servletMap, baseFile);
+			rdMap.put(name, rd);
 		}
 		return rd;
 	}
