@@ -438,8 +438,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getParameterMap()
 	 */
 	@Override
-	public Map getParameterMap() {
-		// TODO 自動生成されたメソッド・スタブ
+	public Map<String, String> getParameterMap() {
 		return null;
 	}
 	/* (非 Javadoc)

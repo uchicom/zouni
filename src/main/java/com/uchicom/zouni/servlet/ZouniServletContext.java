@@ -288,7 +288,7 @@ public class ZouniServletContext implements ServletContext {
 	 * @see javax.servlet.ServletContext#getResourcePaths(java.lang.String)
 	 */
 	@Override
-	public Set getResourcePaths(String arg0) {
+	public Set<String> getResourcePaths(String arg0) {
 		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}

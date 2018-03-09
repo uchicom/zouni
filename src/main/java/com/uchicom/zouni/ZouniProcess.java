@@ -19,6 +19,7 @@ import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ViewServlet;
+import com.uchicom.zouni.servlet.ZouniServletConfig;
 import com.uchicom.zouni.servlet.ZouniServletContext;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
@@ -97,6 +98,7 @@ public class ZouniProcess implements ServerProcess {
 
 							Class<?> clazz = Class.forName(className);
 							servlet = (HttpServlet)clazz.newInstance();
+							servlet.init(ZouniServletConfig.getInstance());
 						}
 						if (servlet != null) {
 							map.put(key, servlet);
