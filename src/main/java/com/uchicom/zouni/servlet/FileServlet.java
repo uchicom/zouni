@@ -19,6 +19,10 @@ import com.uchicom.zouni.Constants;
  */
 public class FileServlet extends HttpServlet {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private File file;
 	private String type;
 	public FileServlet(File file) {
