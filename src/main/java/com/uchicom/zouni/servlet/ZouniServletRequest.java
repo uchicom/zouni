@@ -510,7 +510,8 @@ public class ZouniServletRequest implements HttpServletRequest {
 	 */
 	@Override
 	public HttpSession getSession(boolean arg0) {
-		return ZouniServletContext.getInstance().createSession();
+		session = ZouniServletContext.getInstance().createSession();
+		return session;
 	}
 	/* (非 Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
