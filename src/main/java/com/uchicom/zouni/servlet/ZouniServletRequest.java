@@ -552,7 +552,9 @@ public class ZouniServletRequest implements HttpServletRequest {
 	 */
 	@Override
 	public HttpSession getSession(boolean arg0) {
-		session = ZouniServletContext.getInstance().createSession();
+		if (arg0 && session == null) {
+			session = ZouniServletContext.getInstance().createSession();
+		}
 		return session;
 	}
 
