@@ -135,6 +135,7 @@ public class ZouniProcess implements ServerProcess {
 						}
 						throw e;
 					}
+					// chunkの実装がない
 					try (OutputStream os = socket.getOutputStream();) {
 						os.write(Constants.RES_200);
 						String contentType = res.getContentType();

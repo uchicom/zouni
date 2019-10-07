@@ -31,16 +31,18 @@ public class ZouniServletRequest implements HttpServletRequest {
 	private boolean gzip;
 	private boolean deflate;
 	private ByteArrayInputStream bais;
+
 	public ZouniServletRequest(Socket socket) {
 		this.socket = socket;
-		if (socket.isClosed()) return;
+		if (socket.isClosed())
+			return;
 		try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String head = br.readLine();
+			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			String head = br.readLine();
 			String line = br.readLine();
-			StringBuffer sb = new StringBuffer(4*1024);
+			StringBuffer sb = new StringBuffer(4 * 1024);
 			sb.append(head);
-			while(line != null && !"".equals(line)) {
+			while (line != null && !"".equals(line)) {
 				String[] headValue = line.split(": ");
 				Value value = new Value();
 				value.setParameter(headValue[1]);
@@ -77,13 +79,13 @@ public class ZouniServletRequest implements HttpServletRequest {
 					this.requestUri = heads[1];
 					int startIndex = str.indexOf("\r\n\r\n") + 4;
 					int lastIndex = str.indexOf("\r\n", startIndex);
-					//multipart未対応
-					if (lastIndex>=0) {
+					// multipart未対応
+					if (lastIndex >= 0) {
 						setParameters(str.substring(startIndex, lastIndex));
 					} else {
 						setParameters(str.substring(startIndex));
 					}
-					//Reader作成
+					// Reader作成
 					bais = new ByteArrayInputStream(str.substring(startIndex).getBytes());
 				}
 				Value ae = valueMap.get("header.Accept-Encoding");
@@ -91,7 +93,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 					for (String enc : ae.getParameter().trim().split("[ ,]+")) {
 						if (!gzip && "gzip".equals(enc)) {
 							gzip = true;
-						} else if (!deflate && "deflate".equals(enc)){
+						} else if (!deflate && "deflate".equals(enc)) {
 							deflate = true;
 						}
 					}
@@ -113,6 +115,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 			e.printStackTrace();
 		}
 	}
+
 	private void setParameters(String parameters) {
 		for (String split : parameters.split("&")) {
 			int index = split.indexOf("=");
@@ -144,6 +147,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 		}
 
 	}
+
 	@Override
 	public Object getAttribute(String name) {
 		if (valueMap.containsKey("attribute." + name)) {
@@ -220,7 +224,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return null;
 	}
 
-
 	@Override
 	public String[] getParameterValues(String key) {
 
@@ -238,7 +241,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 				}
 			} else if (value.getParameter() != null) {
 				try {
-					return new String[]{URLDecoder.decode(value.getParameter(), "utf-8")};
+					return new String[] { URLDecoder.decode(value.getParameter(), "utf-8") };
 				} catch (UnsupportedEncodingException e) {
 					e.printStackTrace();
 				}
@@ -279,13 +282,11 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return socket.getInetAddress().getHostName();
 	}
 
-
 	@Override
 	public RequestDispatcher getRequestDispatcher(String path) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public String getAuthType() {
@@ -307,7 +308,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 
 	@Override
 	public String getHeader(String name) {
-		return valueMap.get("header." + name).getParameter();
+		if (valueMap.containsKey("header." + name)) {
+			return valueMap.get("header." + name).getParameter();
+		}
+		return null;
 	}
 
 	@Override
@@ -381,7 +385,6 @@ public class ZouniServletRequest implements HttpServletRequest {
 		return false;
 	}
 
-
 	@Override
 	public String getRequestURI() {
 		return requestUri;
@@ -401,16 +404,22 @@ public class ZouniServletRequest implements HttpServletRequest {
 	public boolean isGzip() {
 		return gzip;
 	}
+
 	public void setGzip(boolean gzip) {
 		this.gzip = gzip;
 	}
+
 	public boolean isDeflate() {
 		return deflate;
 	}
+
 	public void setDeflate(boolean deflate) {
 		this.deflate = deflate;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getLocalAddr()
 	 */
 	@Override
@@ -418,7 +427,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getLocalName()
 	 */
 	@Override
@@ -426,7 +438,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getLocalPort()
 	 */
 	@Override
@@ -434,14 +449,20 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return 0;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getParameterMap()
 	 */
 	@Override
 	public Map<String, String> getParameterMap() {
 		return null;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getParameterNames()
 	 */
 	@Override
@@ -458,7 +479,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		}
 		return parameterNameList.elements();
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getRealPath(java.lang.String)
 	 */
 	@Override
@@ -466,7 +490,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getRemotePort()
 	 */
 	@Override
@@ -474,14 +501,20 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return 0;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#getServerPort()
 	 */
 	@Override
 	public int getServerPort() {
 		return socket.getLocalPort();
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#isSecure()
 	 */
 	@Override
@@ -489,15 +522,21 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return false;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.ServletRequest#setCharacterEncoding(java.lang.String)
 	 */
 	@Override
 	public void setCharacterEncoding(String arg0) throws UnsupportedEncodingException {
 		// TODO 自動生成されたメソッド・スタブ
-		
+
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#getRequestURL()
 	 */
 	@Override
@@ -505,7 +544,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
 	 */
 	@Override
@@ -513,7 +555,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		session = ZouniServletContext.getInstance().createSession();
 		return session;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
 	 */
 	@Override
@@ -521,7 +566,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return false;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
 	 */
 	@Override
@@ -529,7 +577,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return false;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
 	 */
 	@Override
@@ -537,7 +588,10 @@ public class ZouniServletRequest implements HttpServletRequest {
 		// TODO 自動生成されたメソッド・スタブ
 		return false;
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see javax.servlet.http.HttpServletRequest#isUserInRole(java.lang.String)
 	 */
 	@Override
