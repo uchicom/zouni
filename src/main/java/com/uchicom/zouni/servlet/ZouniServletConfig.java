@@ -2,10 +2,10 @@
 package com.uchicom.zouni.servlet;
 
 import com.uchicom.zouni.Constants;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 import java.io.File;
 import java.util.Enumeration;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 
 public class ZouniServletConfig implements ServletConfig {
 
@@ -30,13 +30,11 @@ public class ZouniServletConfig implements ServletConfig {
 
   @Override
   public String getInitParameter(String name) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Enumeration<?> getInitParameterNames() {
-    // TODO Auto-generated method stub
+  public Enumeration<String> getInitParameterNames() {
     return null;
   }
 

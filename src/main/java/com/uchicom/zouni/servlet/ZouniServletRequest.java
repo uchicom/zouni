@@ -1,6 +1,21 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni.servlet;
 
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -10,17 +25,13 @@ import java.net.Socket;
 import java.net.URLDecoder;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 public class ZouniServletRequest implements HttpServletRequest {
   private String method;
@@ -163,7 +174,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   }
 
   @Override
-  public Enumeration<?> getAttributeNames() {
+  public Enumeration<String> getAttributeNames() {
     // TODO Auto-generated method stub
     return null;
   }
@@ -181,7 +192,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   }
 
   @Override
-  public Enumeration<?> getLocales() {
+  public Enumeration<Locale> getLocales() {
     // TODO Auto-generated method stub
     return null;
   }
@@ -314,13 +325,13 @@ public class ZouniServletRequest implements HttpServletRequest {
   }
 
   @Override
-  public Enumeration<?> getHeaders(String name) {
+  public Enumeration<String> getHeaders(String name) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Enumeration<?> getHeaderNames() {
+  public Enumeration<String> getHeaderNames() {
     // TODO Auto-generated method stub
     return null;
   }
@@ -419,7 +430,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getLocalAddr()
+   * @see jakarta.servlet.ServletRequest#getLocalAddr()
    */
   @Override
   public String getLocalAddr() {
@@ -430,7 +441,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getLocalName()
+   * @see jakarta.servlet.ServletRequest#getLocalName()
    */
   @Override
   public String getLocalName() {
@@ -441,7 +452,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getLocalPort()
+   * @see jakarta.servlet.ServletRequest#getLocalPort()
    */
   @Override
   public int getLocalPort() {
@@ -452,20 +463,20 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getParameterMap()
+   * @see jakarta.servlet.ServletRequest#getParameterMap()
    */
   @Override
-  public Map<String, String> getParameterMap() {
+  public Map<String, String[]> getParameterMap() {
     return null;
   }
 
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getParameterNames()
+   * @see jakarta.servlet.ServletRequest#getParameterNames()
    */
   @Override
-  public Enumeration<?> getParameterNames() {
+  public Enumeration<String> getParameterNames() {
     Vector<String> parameterNameList = new Vector<>(valueMap.size());
     for (String key : valueMap.keySet()) {
       if (key.startsWith("param.")) {
@@ -482,18 +493,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getRealPath(java.lang.String)
-   */
-  @Override
-  public String getRealPath(String arg0) {
-    // TODO 自動生成されたメソッド・スタブ
-    return null;
-  }
-
-  /*
-   * (非 Javadoc)
-   *
-   * @see javax.servlet.ServletRequest#getRemotePort()
+   * @see jakarta.servlet.ServletRequest#getRemotePort()
    */
   @Override
   public int getRemotePort() {
@@ -504,7 +504,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#getServerPort()
+   * @see jakarta.servlet.ServletRequest#getServerPort()
    */
   @Override
   public int getServerPort() {
@@ -514,7 +514,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#isSecure()
+   * @see jakarta.servlet.ServletRequest#isSecure()
    */
   @Override
   public boolean isSecure() {
@@ -525,7 +525,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.ServletRequest#setCharacterEncoding(java.lang.String)
+   * @see jakarta.servlet.ServletRequest#setCharacterEncoding(java.lang.String)
    */
   @Override
   public void setCharacterEncoding(String arg0) throws UnsupportedEncodingException {
@@ -536,7 +536,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.http.HttpServletRequest#getRequestURL()
+   * @see jakarta.servlet.http.HttpServletRequest#getRequestURL()
    */
   @Override
   public StringBuffer getRequestURL() {
@@ -547,7 +547,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
+   * @see jakarta.servlet.http.HttpServletRequest#getSession(boolean)
    */
   @Override
   public HttpSession getSession(boolean arg0) {
@@ -560,7 +560,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
+   * @see jakarta.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
    */
   @Override
   public boolean isRequestedSessionIdFromCookie() {
@@ -571,7 +571,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
+   * @see jakarta.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
    */
   @Override
   public boolean isRequestedSessionIdFromURL() {
@@ -582,22 +582,121 @@ public class ZouniServletRequest implements HttpServletRequest {
   /*
    * (非 Javadoc)
    *
-   * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
-   */
-  @Override
-  public boolean isRequestedSessionIdFromUrl() {
-    // TODO 自動生成されたメソッド・スタブ
-    return false;
-  }
-
-  /*
-   * (非 Javadoc)
-   *
-   * @see javax.servlet.http.HttpServletRequest#isUserInRole(java.lang.String)
+   * @see jakarta.servlet.http.HttpServletRequest#isUserInRole(java.lang.String)
    */
   @Override
   public boolean isUserInRole(String arg0) {
     // TODO 自動生成されたメソッド・スタブ
     return false;
+  }
+
+  @Override
+  public long getContentLengthLong() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getContentLengthLong'");
+  }
+
+  @Override
+  public ServletContext getServletContext() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getServletContext'");
+  }
+
+  @Override
+  public AsyncContext startAsync() throws IllegalStateException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'startAsync'");
+  }
+
+  @Override
+  public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse)
+      throws IllegalStateException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'startAsync'");
+  }
+
+  @Override
+  public boolean isAsyncStarted() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'isAsyncStarted'");
+  }
+
+  @Override
+  public boolean isAsyncSupported() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'isAsyncSupported'");
+  }
+
+  @Override
+  public AsyncContext getAsyncContext() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getAsyncContext'");
+  }
+
+  @Override
+  public DispatcherType getDispatcherType() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getDispatcherType'");
+  }
+
+  @Override
+  public String getRequestId() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getRequestId'");
+  }
+
+  @Override
+  public String getProtocolRequestId() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getProtocolRequestId'");
+  }
+
+  @Override
+  public ServletConnection getServletConnection() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getServletConnection'");
+  }
+
+  @Override
+  public String changeSessionId() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'changeSessionId'");
+  }
+
+  @Override
+  public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
+  }
+
+  @Override
+  public void login(String username, String password) throws ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'login'");
+  }
+
+  @Override
+  public void logout() throws ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'logout'");
+  }
+
+  @Override
+  public Collection<Part> getParts() throws IOException, ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getParts'");
+  }
+
+  @Override
+  public Part getPart(String name) throws IOException, ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getPart'");
+  }
+
+  @Override
+  public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass)
+      throws IOException, ServletException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'upgrade'");
   }
 }

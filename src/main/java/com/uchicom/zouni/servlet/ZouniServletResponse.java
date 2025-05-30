@@ -1,15 +1,16 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni.servlet;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.Locale;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 
 public class ZouniServletResponse implements HttpServletResponse {
 
@@ -161,26 +162,8 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   }
 
-  @Override
-  public void setStatus(int statuscode, String message) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public String encodeUrl(String url) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public String encodeRedirectUrl(String url) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   /* (非 Javadoc)
-   * @see javax.servlet.ServletResponse#isCommitted()
+   * @see jakarta.servlet.ServletResponse#isCommitted()
    */
   @Override
   public boolean isCommitted() {
@@ -189,7 +172,7 @@ public class ZouniServletResponse implements HttpServletResponse {
   }
 
   /* (非 Javadoc)
-   * @see javax.servlet.ServletResponse#resetBuffer()
+   * @see jakarta.servlet.ServletResponse#resetBuffer()
    */
   @Override
   public void resetBuffer() {
@@ -198,7 +181,7 @@ public class ZouniServletResponse implements HttpServletResponse {
   }
 
   /* (非 Javadoc)
-   * @see javax.servlet.ServletResponse#setCharacterEncoding(java.lang.String)
+   * @see jakarta.servlet.ServletResponse#setCharacterEncoding(java.lang.String)
    */
   @Override
   public void setCharacterEncoding(String arg0) {
@@ -207,11 +190,47 @@ public class ZouniServletResponse implements HttpServletResponse {
   }
 
   /* (非 Javadoc)
-   * @see javax.servlet.http.HttpServletResponse#containsHeader(java.lang.String)
+   * @see jakarta.servlet.http.HttpServletResponse#containsHeader(java.lang.String)
    */
   @Override
   public boolean containsHeader(String arg0) {
     // TODO 自動生成されたメソッド・スタブ
     return false;
+  }
+
+  @Override
+  public void setContentLengthLong(long len) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'setContentLengthLong'");
+  }
+
+  @Override
+  public void sendRedirect(String location, int sc, boolean clearBuffer) throws IOException {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'sendRedirect'");
+  }
+
+  @Override
+  public int getStatus() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getStatus'");
+  }
+
+  @Override
+  public String getHeader(String name) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getHeader'");
+  }
+
+  @Override
+  public Collection<String> getHeaders(String name) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getHeaders'");
+  }
+
+  @Override
+  public Collection<String> getHeaderNames() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getHeaderNames'");
   }
 }

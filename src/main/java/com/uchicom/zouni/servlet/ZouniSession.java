@@ -1,15 +1,13 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni.servlet;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionContext;
 
-@SuppressWarnings("deprecation")
 public class ZouniSession implements HttpSession {
 
   private String id;
@@ -98,43 +96,8 @@ public class ZouniSession implements HttpSession {
     id = null;
   }
 
-  @Override
-  @Deprecated
-  public Object getValue(String name) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  @Deprecated
-  public String[] getValueNames() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  @Deprecated
-  public void putValue(String name, Object value) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  @Deprecated
-  public void removeValue(String name) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  @Deprecated
-  public HttpSessionContext getSessionContext() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   /* (非 Javadoc)
-   * @see javax.servlet.http.HttpSession#getServletContext()
+   * @see jakarta.servlet.http.HttpSession#getServletContext()
    */
   @Override
   public ServletContext getServletContext() {
