@@ -32,10 +32,6 @@ public class ZouniParameter extends Parameter {
     if (!is("public")) {
       put("public", Constants.DEFAULT_PUBLIC);
     }
-    // プログラム内部で使用するディレクトリの基準フォルダ
-    if (!is("dir")) {
-      put("dir", Constants.DEFAULT_DIR);
-    }
     // 実行するサーバのタイプ
     if (!is("type")) {
       put("type", "single");
@@ -56,7 +52,7 @@ public class ZouniParameter extends Parameter {
     if (!is("pool")) {
       put("pool", Constants.DEFAULT_POOL);
     }
-    ZouniServletConfig.init(getFile("dir"), getFile("public"));
+    ZouniServletConfig.init(getFile("public"));
     return true;
   }
 

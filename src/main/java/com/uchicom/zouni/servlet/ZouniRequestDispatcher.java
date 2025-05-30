@@ -18,12 +18,10 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
 
   private String name;
   private Map<String, Servlet> servletMap;
-  private File baseFile;
 
-  public ZouniRequestDispatcher(String name, Map<String, Servlet> servletMap, File baseFile) {
+  public ZouniRequestDispatcher(String name, Map<String, Servlet> servletMap) {
     this.name = name;
     this.servletMap = servletMap;
-    this.baseFile = baseFile;
   }
 
   ZipInputStream zis;
@@ -31,11 +29,7 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
   @Override
   public void forward(ServletRequest req, ServletResponse res)
       throws ServletException, IOException {
-    if (name.endsWith(".jsp")) {
-      // 解析した結果を保持する
-      Servlet servlet = getServlet(name, "dir.");
-      servlet.service(req, res);
-    } else if (name.endsWith(".htm")) {
+    if (name.endsWith(".htm")) { // TODO 静的ファイルを保持しておく必要がある
       // 静的ファイル呼び出し
       try {
         file2Stream(new File(name), res.getOutputStream());
@@ -62,13 +56,7 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
     } else {
       key = keyPrefix + "/" + name;
     }
-    Servlet servlet = null;
-    if (servletMap.containsKey(key)) {
-      servlet = servletMap.get(key);
-    } else {
-      servlet = new ViewServlet(new File(baseFile, name));
-      servletMap.put(key, servlet);
-    }
+    var servlet = servletMap.get(key);
     return servlet;
   }
 

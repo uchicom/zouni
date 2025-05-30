@@ -11,12 +11,12 @@ public class ZouniServletConfig implements ServletConfig {
 
   private static ZouniServletConfig zouniServletConfig;
 
-  private ZouniServletConfig(File baseFile, File pubFile) {
-    ZouniServletContext.init(baseFile, pubFile);
+  private ZouniServletConfig(File pubFile) {
+    ZouniServletContext.init(pubFile);
   }
 
-  public static void init(File baseFile, File pubFile) {
-    zouniServletConfig = new ZouniServletConfig(baseFile, pubFile);
+  public static void init(File pubFile) {
+    zouniServletConfig = new ZouniServletConfig(pubFile);
   }
 
   public static ZouniServletConfig getInstance() {
