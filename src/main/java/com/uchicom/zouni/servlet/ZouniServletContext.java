@@ -38,18 +38,15 @@ public class ZouniServletContext implements ServletContext {
   private Map<String, Servlet> servletMap = new ConcurrentHashMap<String, Servlet>();
   private Map<String, RequestDispatcher> rdMap = new ConcurrentHashMap<String, RequestDispatcher>();
   private Map<String, ZouniSession> sessionMap = new ConcurrentHashMap<String, ZouniSession>();
-  private File baseFile;
   private File pubFile;
 
-  private ZouniServletContext(File baseFile, File pubFile) {
-    this.baseFile = baseFile;
+  private ZouniServletContext(File pubFile) {
     this.pubFile = pubFile;
-    watch(baseFile, "dir.");
     watch(pubFile, "pub.");
   }
 
-  public static void init(File baseFile, File pubFile) {
-    context = new ZouniServletContext(baseFile, pubFile);
+  public static void init(File pubFile) {
+    context = new ZouniServletContext(pubFile);
   }
 
   public static ZouniServletContext getInstance() {
@@ -84,7 +81,7 @@ public class ZouniServletContext implements ServletContext {
     if (rdMap.containsKey(name)) {
       rd = rdMap.get(name);
     } else {
-      rd = new ZouniRequestDispatcher(name, servletMap, baseFile);
+      rd = new ZouniRequestDispatcher(name, servletMap);
       rdMap.put(name, rd);
     }
     return rd;

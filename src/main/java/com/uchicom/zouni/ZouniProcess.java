@@ -4,7 +4,6 @@ package com.uchicom.zouni;
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.FileServlet;
-import com.uchicom.zouni.servlet.ViewServlet;
 import com.uchicom.zouni.servlet.ZouniServletConfig;
 import com.uchicom.zouni.servlet.ZouniServletContext;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
@@ -64,9 +63,6 @@ public class ZouniProcess implements ServerProcess {
               file = new File(dir, "index.htm");
               if (!file.exists()) {
                 file = new File(dir, "index.html");
-                if (!file.exists()) {
-                  file = new File(dir, "index.jsp");
-                }
               }
             } else {
               file = new File(pubDir, req.getRequestURI().substring(1));
@@ -75,13 +71,8 @@ public class ZouniProcess implements ServerProcess {
             if (file.exists()) {
               // ファイルが存在する場合
               if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
-                if (file.getCanonicalPath().endsWith(".jsp")) {
-                  // JSP出力サーブレット
-                  servlet = new ViewServlet(file);
-                } else {
-                  // ファイル出力サーブレット
-                  servlet = new FileServlet(file);
-                }
+                // ファイル出力サーブレット
+                servlet = new FileServlet(file);
               }
             } else {
               // ファイルが存在しない場合Servletクラスを探す

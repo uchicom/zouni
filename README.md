@@ -1,5 +1,5 @@
 # zouni
-java servlet jsp server
+java servlet server
 
 ## mvn
 ### サーバ起動
