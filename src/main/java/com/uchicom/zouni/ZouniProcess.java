@@ -106,7 +106,7 @@ public class ZouniProcess implements ServerProcess {
               }
 
               Class<?> clazz = Class.forName(className);
-              servlet = (HttpServlet) clazz.newInstance();
+              servlet = (HttpServlet) clazz.getConstructor().newInstance();
               servlet.init(ZouniServletConfig.getInstance());
             }
             if (servlet != null) {
