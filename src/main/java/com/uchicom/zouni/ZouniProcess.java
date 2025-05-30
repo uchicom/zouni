@@ -9,6 +9,9 @@ import com.uchicom.zouni.servlet.ZouniServletConfig;
 import com.uchicom.zouni.servlet.ZouniServletContext;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -19,9 +22,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
