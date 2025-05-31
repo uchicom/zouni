@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.uchicom.server.Server;
+import com.uchicom.server.ServerProcessFactory;
 import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +24,7 @@ import org.mockito.Captor;
 public class MainTest extends AbstractTest {
 
   @Captor ArgumentCaptor<PrintStream> printStreamCaptor;
+  @Captor ArgumentCaptor<ServerProcessFactory> serverProcessArgumentCaptor;
 
   @Test
   public void main() throws Exception {
@@ -34,7 +36,7 @@ public class MainTest extends AbstractTest {
             ZouniParameter.class,
             (mock, context) -> {
               doReturn(true).when(mock).init(printStreamCaptor.capture());
-              doReturn(server).when(mock).createServer();
+              doReturn(server).when(mock).createServer(serverProcessArgumentCaptor.capture());
               doNothing().when(server).execute();
               assertThat(context.arguments().get(0)).isEqualTo(args);
             })) {
@@ -43,7 +45,7 @@ public class MainTest extends AbstractTest {
       // assert
       verify(server, times(1)).execute();
       assertThat(printStreamCaptor.getValue()).isEqualTo(System.err);
-      verify(mocked.constructed().get(0), times(1)).createServer();
+      assertThat(serverProcessArgumentCaptor.getValue()).isNotNull();
     }
   }
 }

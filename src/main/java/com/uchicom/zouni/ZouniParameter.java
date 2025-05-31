@@ -4,6 +4,7 @@ package com.uchicom.zouni;
 import com.uchicom.server.MultiSocketServer;
 import com.uchicom.server.PoolSocketServer;
 import com.uchicom.server.Server;
+import com.uchicom.server.ServerProcessFactory;
 import com.uchicom.server.SingleSocketServer;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.ZouniServletConfig;
@@ -45,11 +46,11 @@ public class ZouniParameter extends Parameter {
     return true;
   }
 
-  public Server createServer() {
+  public Server createServer(ServerProcessFactory factory) {
     return switch (get("type")) {
-      case "multi" -> new MultiSocketServer(this, (a, b) -> new ZouniProcess(a, b));
-      case "pool" -> new PoolSocketServer(this, (a, b) -> new ZouniProcess(a, b));
-      case "single" -> new SingleSocketServer(this, (a, b) -> new ZouniProcess(a, b));
+      case "multi" -> new MultiSocketServer(this, factory);
+      case "pool" -> new PoolSocketServer(this, factory);
+      case "single" -> new SingleSocketServer(this, factory);
       default -> null;
     };
   }
