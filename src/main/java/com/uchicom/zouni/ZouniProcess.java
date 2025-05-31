@@ -3,14 +3,12 @@ package com.uchicom.zouni;
 
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
+import com.uchicom.zouni.factory.di.DIFactory;
 import com.uchicom.zouni.servlet.FileServlet;
-import com.uchicom.zouni.servlet.ZouniServletConfig;
-import com.uchicom.zouni.servlet.ZouniServletContext;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -20,8 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
 public class ZouniProcess implements ServerProcess {
@@ -29,16 +29,21 @@ public class ZouniProcess implements ServerProcess {
       DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
   private String host;
   private Socket socket;
-  private String servletPackage;
   private File pubDir;
+  public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
+  private Logger logger = DIFactory.logger();
 
-  public ZouniProcess(Parameter parameter, Socket socket) {
+  public ZouniProcess(
+      Parameter parameter,
+      Socket socket,
+      Map<String, Servlet> map,
+      Map<String, Servlet> startWithMap) {
     this.socket = socket;
-    this.servletPackage = parameter.get("package");
+    this.map = map;
+    this.startWithMap = startWithMap;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
-    this.map = ZouniServletContext.getInstance().getServletMap();
   }
 
   @Override
@@ -46,12 +51,17 @@ public class ZouniProcess implements ServerProcess {
     try {
       ZouniServletRequest req = new ZouniServletRequest(socket);
       if ("GET".equals(req.getMethod()) || "POST".equals(req.getMethod())) {
-        Servlet servlet = null;
         String key = "pub." + req.getRequestURI();
-        if (map.containsKey(key)) {
-          servlet = map.get(key);
-        } else {
-          String className = null;
+        var servlet = map.get(key);
+        if (servlet == null) {
+          servlet =
+              startWithMap.entrySet().stream()
+                  .filter(entry -> key.startsWith(entry.getKey()))
+                  .map(Entry::getValue)
+                  .findFirst()
+                  .orElse(null);
+        }
+        if (servlet == null) {
           // リクエスト対象のファイルを探す
           File file = null;
           if (req.getRequestURI().endsWith("/")) {
@@ -75,38 +85,6 @@ public class ZouniProcess implements ServerProcess {
               // ファイル出力サーブレット
               servlet = new FileServlet(file);
             }
-          } else {
-            // ファイルが存在しない場合Servletクラスを探す
-            if ("/".equals(req.getRequestURI())) {
-              className = servletPackage + ".IndexServlet";
-            } else if (req.getRequestURI().endsWith("/")) {
-              className =
-                  servletPackage + req.getRequestURI().replaceAll("/", ".") + "IndexServlet";
-              // 下の階層に対応していない
-              //							} else if (req.getRequestURI().split("/").length > 2) {
-              //								className = servletPackage + req.getRequestURI().replace("/", ".") (1,
-              // 2).toUpperCase() + req.getRequestURI().substring(2, req.getRequestURI().length())
-              // + "Servlet";
-            } else {
-              int lastIndex = req.getRequestURI().lastIndexOf("/");
-              className =
-                  servletPackage
-                      + req.getRequestURI().substring(0, lastIndex + 1).replace('/', '.')
-                      + req.getRequestURI()
-                          .substring(lastIndex + 1, lastIndex + 2)
-                          .toUpperCase(Locale.JAPANESE)
-                      + req.getRequestURI().substring(lastIndex + 2, req.getRequestURI().length())
-                      + "Servlet";
-            }
-
-            Class<?> clazz = Class.forName(className);
-            servlet = (HttpServlet) clazz.getConstructor().newInstance();
-            servlet.init(ZouniServletConfig.getInstance());
-          }
-          if (servlet != null) {
-            map.put(key, servlet);
-          } else {
-            map.put(key, null);
           }
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -206,13 +184,13 @@ public class ZouniProcess implements ServerProcess {
         }
       }
     } catch (Throwable e) {
-      e.printStackTrace();
+      logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
       if (socket != null && socket.isConnected()) {
         try {
           socket.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          logger.warning("Socket close error: " + e.getMessage());
         }
       }
     }
