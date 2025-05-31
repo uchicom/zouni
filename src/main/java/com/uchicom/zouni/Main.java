@@ -9,7 +9,7 @@ package com.uchicom.zouni;
 public class Main {
 
   public static void main(String[] args) {
-    ZouniParameter parameter = new ZouniParameter(args);
+    var parameter = new ZouniParameter(args);
     if (parameter.init(System.err)) {
       parameter.createServer().execute();
     }
