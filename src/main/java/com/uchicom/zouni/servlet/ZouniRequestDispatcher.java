@@ -34,8 +34,7 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
       try {
         file2Stream(new File(name), res.getOutputStream());
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     } else {
       // サーブレット呼び出し.
@@ -69,7 +68,7 @@ public class ZouniRequestDispatcher implements RequestDispatcher {
         sos.write(bytes, 0, length);
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 }

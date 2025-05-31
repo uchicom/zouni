@@ -14,9 +14,6 @@ public class ZouniServletOutputStream extends ServletOutputStream {
     this.os = os;
   }
 
-  /* (非 Javadoc)
-   * @see java.io.OutputStream#write(int)
-   */
   @Override
   public void write(int b) throws IOException {
     os.write(b);

@@ -98,9 +98,8 @@ public class ZouniServletContext implements ServletContext {
     try {
       return new File(pubFile, path).getCanonicalPath();
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return null;
   }
 
   @Override
@@ -191,9 +190,6 @@ public class ZouniServletContext implements ServletContext {
 
   Map<WatchKey, Path> pathMap = new HashMap<>();
 
-  /**
-   * @param baseFile
-   */
   private void watch(File baseFile, String keyPrefix) {
     Thread thread =
         new Thread(
@@ -231,22 +227,16 @@ public class ZouniServletContext implements ServletContext {
                   key.reset();
                 }
               } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
               } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
               }
             });
     thread.setDaemon(false); // mainスレッドと運命を共に
     thread.start();
   }
 
-  /**
-   * 監視サービスにフォルダを再起呼び出しして登録する
-   *
-   * @param service
-   * @param file
-   * @throws IOException
-   */
+  /** 監視サービスにフォルダを再起呼び出しして登録する */
   public void regist(WatchService service, File file) throws IOException {
     if (file.isDirectory()) {
       Path path = file.toPath();
@@ -266,27 +256,18 @@ public class ZouniServletContext implements ServletContext {
     }
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletContext#getContextPath()
-   */
   @Override
   public String getContextPath() {
     // TODO 自動生成されたメソッド・スタブ
     return null;
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletContext#getResourcePaths(java.lang.String)
-   */
   @Override
   public Set<String> getResourcePaths(String arg0) {
     // TODO 自動生成されたメソッド・スタブ
     return null;
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletContext#getServletContextName()
-   */
   @Override
   public String getServletContextName() {
     // TODO 自動生成されたメソッド・スタブ

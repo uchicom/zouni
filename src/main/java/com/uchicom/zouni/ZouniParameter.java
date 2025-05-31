@@ -9,24 +9,13 @@ import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.ZouniServletConfig;
 import java.io.PrintStream;
 
-/**
- * @author uchicom: Shigeki Uchiyama
- */
 public class ZouniParameter extends Parameter {
 
-  /**
-   * @param args
-   */
   public ZouniParameter(String[] args) {
     super(args);
   }
 
-  /**
-   * 初期化
-   *
-   * @param ps
-   * @return
-   */
+  /** 初期化 */
   public boolean init(PrintStream ps) {
     // 公開ディレクトリの基準フォルダ
     if (!is("public")) {
@@ -57,33 +46,11 @@ public class ZouniParameter extends Parameter {
   }
 
   public Server createServer() {
-    Server server = null;
-    switch (get("type")) {
-      case "multi":
-        server =
-            new MultiSocketServer(
-                this,
-                (a, b) -> {
-                  return new ZouniProcess(a, b);
-                });
-        break;
-      case "pool":
-        server =
-            new PoolSocketServer(
-                this,
-                (a, b) -> {
-                  return new ZouniProcess(a, b);
-                });
-        break;
-      case "single":
-        server =
-            new SingleSocketServer(
-                this,
-                (a, b) -> {
-                  return new ZouniProcess(a, b);
-                });
-        break;
-    }
-    return server;
+    return switch (get("type")) {
+      case "multi" -> new MultiSocketServer(this, (a, b) -> new ZouniProcess(a, b));
+      case "pool" -> new PoolSocketServer(this, (a, b) -> new ZouniProcess(a, b));
+      case "single" -> new SingleSocketServer(this, (a, b) -> new ZouniProcess(a, b));
+      default -> null;
+    };
   }
 }

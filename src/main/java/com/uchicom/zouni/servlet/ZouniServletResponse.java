@@ -45,6 +45,7 @@ public class ZouniServletResponse implements HttpServletResponse {
     this.type = type;
   }
 
+  @Override
   public String getContentType() {
     return type;
   }
@@ -162,36 +163,24 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletResponse#isCommitted()
-   */
   @Override
   public boolean isCommitted() {
     // TODO 自動生成されたメソッド・スタブ
     return false;
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletResponse#resetBuffer()
-   */
   @Override
   public void resetBuffer() {
     // TODO 自動生成されたメソッド・スタブ
 
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.ServletResponse#setCharacterEncoding(java.lang.String)
-   */
   @Override
   public void setCharacterEncoding(String arg0) {
     // TODO 自動生成されたメソッド・スタブ
 
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.http.HttpServletResponse#containsHeader(java.lang.String)
-   */
   @Override
   public boolean containsHeader(String arg0) {
     // TODO 自動生成されたメソッド・スタブ
