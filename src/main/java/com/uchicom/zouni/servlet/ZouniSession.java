@@ -96,9 +96,6 @@ public class ZouniSession implements HttpSession {
     id = null;
   }
 
-  /* (非 Javadoc)
-   * @see jakarta.servlet.http.HttpSession#getServletContext()
-   */
   @Override
   public ServletContext getServletContext() {
     // TODO 自動生成されたメソッド・スタブ

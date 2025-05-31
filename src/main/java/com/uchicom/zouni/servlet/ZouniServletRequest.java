@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Vector;
 
 public class ZouniServletRequest implements HttpServletRequest {
   private String method;
@@ -47,13 +47,15 @@ public class ZouniServletRequest implements HttpServletRequest {
     this.socket = socket;
     if (socket.isClosed()) return;
     try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      BufferedReader br =
+          new BufferedReader(
+              new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       String head = br.readLine();
       String line = br.readLine();
-      StringBuffer sb = new StringBuffer(4 * 1024);
+      var sb = new StringBuilder(4 * 1024);
       sb.append(head);
       while (line != null && !"".equals(line)) {
-        String[] headValue = line.split(": ");
+        String[] headValue = line.split(": ", 2);
         Value value = new Value();
         value.setParameter(headValue[1]);
         valueMap.put("header." + headValue[0], value);
@@ -76,7 +78,7 @@ public class ZouniServletRequest implements HttpServletRequest {
           sb.append(chars);
         }
         String str = sb.toString();
-        String[] heads = head.split(" ");
+        String[] heads = head.split(" ", 0);
         if (heads[0].equals("GET")) {
           this.method = "GET";
           this.requestUri = heads[1];
@@ -97,11 +99,12 @@ public class ZouniServletRequest implements HttpServletRequest {
             setParameters(str.substring(startIndex));
           }
           // Reader作成
-          bais = new ByteArrayInputStream(str.substring(startIndex).getBytes());
+          bais =
+              new ByteArrayInputStream(str.substring(startIndex).getBytes(StandardCharsets.UTF_8));
         }
         Value ae = valueMap.get("header.Accept-Encoding");
         if (ae != null) {
-          for (String enc : ae.getParameter().trim().split("[ ,]+")) {
+          for (String enc : ae.getParameter().trim().split("[ ,]+", 0)) {
             if (!gzip && "gzip".equals(enc)) {
               gzip = true;
             } else if (!deflate && "deflate".equals(enc)) {
@@ -111,8 +114,8 @@ public class ZouniServletRequest implements HttpServletRequest {
         }
         Value cv = valueMap.get("header.Cookie");
         if (cv != null) {
-          for (String cookie : cv.getParameter().split(";")) {
-            String[] keyValue = cookie.trim().split("=");
+          for (String cookie : cv.getParameter().split(";", 0)) {
+            String[] keyValue = cookie.trim().split("=", 0);
             if (keyValue[0].equals("JSESSIONID")) {
               if (session == null) {
                 this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
@@ -122,13 +125,12 @@ public class ZouniServletRequest implements HttpServletRequest {
         }
       }
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
   private void setParameters(String parameters) {
-    for (String split : parameters.split("&")) {
+    for (String split : parameters.split("&", 0)) {
       int index = split.indexOf("=");
       if (index > 0) {
         String key = "param." + split.substring(0, index);
@@ -228,7 +230,7 @@ public class ZouniServletRequest implements HttpServletRequest {
       try {
         return URLDecoder.decode(value.getParameter(), "utf-8");
       } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     }
     return null;
@@ -247,13 +249,13 @@ public class ZouniServletRequest implements HttpServletRequest {
           }
           return values;
         } catch (UnsupportedEncodingException e) {
-          e.printStackTrace();
+          throw new RuntimeException(e);
         }
       } else if (value.getParameter() != null) {
         try {
           return new String[] {URLDecoder.decode(value.getParameter(), "utf-8")};
         } catch (UnsupportedEncodingException e) {
-          e.printStackTrace();
+          throw new RuntimeException(e);
         }
       }
     }
@@ -279,7 +281,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   @Override
   public BufferedReader getReader() throws IOException {
-    return new BufferedReader(new InputStreamReader(bais));
+    return new BufferedReader(new InputStreamReader(bais, StandardCharsets.UTF_8));
   }
 
   @Override
@@ -427,128 +429,63 @@ public class ZouniServletRequest implements HttpServletRequest {
     this.deflate = deflate;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getLocalAddr()
-   */
   @Override
   public String getLocalAddr() {
     // TODO 自動生成されたメソッド・スタブ
     return null;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getLocalName()
-   */
   @Override
   public String getLocalName() {
     // TODO 自動生成されたメソッド・スタブ
     return null;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getLocalPort()
-   */
   @Override
   public int getLocalPort() {
     // TODO 自動生成されたメソッド・スタブ
     return 0;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getParameterMap()
-   */
   @Override
   public Map<String, String[]> getParameterMap() {
     return null;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getParameterNames()
-   */
   @Override
   public Enumeration<String> getParameterNames() {
-    Vector<String> parameterNameList = new Vector<>(valueMap.size());
-    for (String key : valueMap.keySet()) {
-      if (key.startsWith("param.")) {
-        try {
-          parameterNameList.add(URLDecoder.decode(key.substring(6), "utf-8"));
-        } catch (UnsupportedEncodingException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    return parameterNameList.elements();
+    return null;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getRemotePort()
-   */
   @Override
   public int getRemotePort() {
     // TODO 自動生成されたメソッド・スタブ
     return 0;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#getServerPort()
-   */
   @Override
   public int getServerPort() {
     return socket.getLocalPort();
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#isSecure()
-   */
   @Override
   public boolean isSecure() {
     // TODO 自動生成されたメソッド・スタブ
     return false;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.ServletRequest#setCharacterEncoding(java.lang.String)
-   */
   @Override
   public void setCharacterEncoding(String arg0) throws UnsupportedEncodingException {
     // TODO 自動生成されたメソッド・スタブ
 
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.http.HttpServletRequest#getRequestURL()
-   */
   @Override
   public StringBuffer getRequestURL() {
     // TODO 自動生成されたメソッド・スタブ
     return null;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.http.HttpServletRequest#getSession(boolean)
-   */
   @Override
   public HttpSession getSession(boolean arg0) {
     if (arg0 && session == null) {
@@ -557,33 +494,18 @@ public class ZouniServletRequest implements HttpServletRequest {
     return session;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
-   */
   @Override
   public boolean isRequestedSessionIdFromCookie() {
     // TODO 自動生成されたメソッド・スタブ
     return false;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
-   */
   @Override
   public boolean isRequestedSessionIdFromURL() {
     // TODO 自動生成されたメソッド・スタブ
     return false;
   }
 
-  /*
-   * (非 Javadoc)
-   *
-   * @see jakarta.servlet.http.HttpServletRequest#isUserInRole(java.lang.String)
-   */
   @Override
   public boolean isUserInRole(String arg0) {
     // TODO 自動生成されたメソッド・スタブ

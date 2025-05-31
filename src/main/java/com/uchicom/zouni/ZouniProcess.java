@@ -16,15 +16,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
-      DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("Z"));
+      DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
   private String host;
   private Socket socket;
   private String servletPackage;
@@ -49,73 +51,63 @@ public class ZouniProcess implements ServerProcess {
         if (map.containsKey(key)) {
           servlet = map.get(key);
         } else {
-          try {
-            String className = null;
-            // リクエスト対象のファイルを探す
-            File file = null;
-            if (req.getRequestURI().endsWith("/")) {
-              File dir = null;
-              if ("/".equals(req.getRequestURI())) {
-                dir = pubDir;
-              } else {
-                dir = new File(pubDir, req.getRequestURI());
-              }
-              file = new File(dir, "index.htm");
-              if (!file.exists()) {
-                file = new File(dir, "index.html");
-              }
+          String className = null;
+          // リクエスト対象のファイルを探す
+          File file = null;
+          if (req.getRequestURI().endsWith("/")) {
+            File dir = null;
+            if ("/".equals(req.getRequestURI())) {
+              dir = pubDir;
             } else {
-              file = new File(pubDir, req.getRequestURI().substring(1));
+              dir = new File(pubDir, req.getRequestURI());
             }
-
-            if (file.exists()) {
-              // ファイルが存在する場合
-              if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
-                // ファイル出力サーブレット
-                servlet = new FileServlet(file);
-              }
-            } else {
-              // ファイルが存在しない場合Servletクラスを探す
-              if ("/".equals(req.getRequestURI())) {
-                className = servletPackage + ".IndexServlet";
-              } else if (req.getRequestURI().endsWith("/")) {
-                className =
-                    servletPackage + req.getRequestURI().replaceAll("/", ".") + "IndexServlet";
-                // 下の階層に対応していない
-                //							} else if (req.getRequestURI().split("/").length > 2) {
-                //								className = servletPackage + req.getRequestURI().replace("/", ".") (1,
-                // 2).toUpperCase() + req.getRequestURI().substring(2, req.getRequestURI().length())
-                // + "Servlet";
-              } else {
-                int lastIndex = req.getRequestURI().lastIndexOf("/");
-                className =
-                    servletPackage
-                        + req.getRequestURI().substring(0, lastIndex + 1).replace('/', '.')
-                        + req.getRequestURI().substring(lastIndex + 1, lastIndex + 2).toUpperCase()
-                        + req.getRequestURI().substring(lastIndex + 2, req.getRequestURI().length())
-                        + "Servlet";
-              }
-
-              Class<?> clazz = Class.forName(className);
-              servlet = (HttpServlet) clazz.getConstructor().newInstance();
-              servlet.init(ZouniServletConfig.getInstance());
+            file = new File(dir, "index.htm");
+            if (!file.exists()) {
+              file = new File(dir, "index.html");
             }
-            if (servlet != null) {
-              map.put(key, servlet);
-            } else {
-              map.put(key, null);
-            }
-          } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          } catch (InstantiationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+          } else {
+            file = new File(pubDir, req.getRequestURI().substring(1));
           }
-          ;
+
+          if (file.exists()) {
+            // ファイルが存在する場合
+            if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
+              // ファイル出力サーブレット
+              servlet = new FileServlet(file);
+            }
+          } else {
+            // ファイルが存在しない場合Servletクラスを探す
+            if ("/".equals(req.getRequestURI())) {
+              className = servletPackage + ".IndexServlet";
+            } else if (req.getRequestURI().endsWith("/")) {
+              className =
+                  servletPackage + req.getRequestURI().replaceAll("/", ".") + "IndexServlet";
+              // 下の階層に対応していない
+              //							} else if (req.getRequestURI().split("/").length > 2) {
+              //								className = servletPackage + req.getRequestURI().replace("/", ".") (1,
+              // 2).toUpperCase() + req.getRequestURI().substring(2, req.getRequestURI().length())
+              // + "Servlet";
+            } else {
+              int lastIndex = req.getRequestURI().lastIndexOf("/");
+              className =
+                  servletPackage
+                      + req.getRequestURI().substring(0, lastIndex + 1).replace('/', '.')
+                      + req.getRequestURI()
+                          .substring(lastIndex + 1, lastIndex + 2)
+                          .toUpperCase(Locale.JAPANESE)
+                      + req.getRequestURI().substring(lastIndex + 2, req.getRequestURI().length())
+                      + "Servlet";
+            }
+
+            Class<?> clazz = Class.forName(className);
+            servlet = (HttpServlet) clazz.getConstructor().newInstance();
+            servlet.init(ZouniServletConfig.getInstance());
+          }
+          if (servlet != null) {
+            map.put(key, servlet);
+          } else {
+            map.put(key, null);
+          }
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZouniServletResponse res = null;
@@ -141,7 +133,7 @@ public class ZouniProcess implements ServerProcess {
             os.write(Constants.RES_200);
             String contentType = res.getContentType();
             if (contentType != null) {
-              os.write(contentType.getBytes());
+              os.write(contentType.getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
             } else {
               os.write(Constants.RES_CONTENT_TYPE);
@@ -152,39 +144,54 @@ public class ZouniProcess implements ServerProcess {
               gzos.finish();
             }
             os.write(Constants.RES_CONTENT_LENGTH);
-            os.write(String.valueOf(baos.size()).getBytes());
+            os.write(String.valueOf(baos.size()).getBytes(StandardCharsets.US_ASCII));
             os.write(Constants.RES_LINE_END);
             os.write(Constants.RES_LAST_MODIFIED);
-            os.write(formatter.format(OffsetDateTime.now()).getBytes());
+            os.write(
+                formatter
+                    .format(OffsetDateTime.now(ZoneOffset.systemDefault()))
+                    .getBytes(StandardCharsets.US_ASCII));
             os.write(Constants.RES_LINE_END);
             os.write(Constants.RES_SERVER);
             if (req.getSession() != null && req.getSession().getId() != null) {
               os.write(Constants.SET_COOKIE);
               os.write(Constants.JSESSIONID);
-              os.write("; Expires=".getBytes());
-              os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
+              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+              os.write(
+                  Constants.formatter
+                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
+                      .getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
 
               os.write(Constants.SET_COOKIE);
               os.write(Constants.JSESSIONID);
-              os.write(req.getSession().getId().getBytes());
-              os.write("; Domain=".getBytes());
-              os.write(this.host.getBytes());
-              os.write("; Expires=".getBytes());
-              os.write(Constants.formatter.format(OffsetDateTime.now().plusDays(1)).getBytes());
+              os.write(req.getSession().getId().getBytes(StandardCharsets.US_ASCII));
+              os.write("; Domain=".getBytes(StandardCharsets.US_ASCII));
+              os.write(this.host.getBytes(StandardCharsets.US_ASCII));
+              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+              os.write(
+                  Constants.formatter
+                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).plusDays(1))
+                      .getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
             } else {
               os.write(Constants.SET_COOKIE);
               os.write(Constants.JSESSIONID);
-              os.write("; Expires=".getBytes());
-              os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
+              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+              os.write(
+                  Constants.formatter
+                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
+                      .getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
               os.write(Constants.SET_COOKIE);
               os.write(Constants.JSESSIONID);
-              os.write("; Domain=".getBytes());
-              os.write(this.host.getBytes());
-              os.write("; Expires=".getBytes());
-              os.write(Constants.formatter.format(OffsetDateTime.now().minusDays(1)).getBytes());
+              os.write("; Domain=".getBytes(StandardCharsets.US_ASCII));
+              os.write(this.host.getBytes(StandardCharsets.US_ASCII));
+              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+              os.write(
+                  Constants.formatter
+                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
+                      .getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
             }
             os.write(Constants.RES_LINE_END);
@@ -211,18 +218,12 @@ public class ZouniProcess implements ServerProcess {
     }
   }
 
-  /* (非 Javadoc)
-   * @see com.uchicom.server.ServerProcess#getLastTime()
-   */
   @Override
   public long getLastTime() {
     // TODO 自動生成されたメソッド・スタブ
     return 0;
   }
 
-  /* (非 Javadoc)
-   * @see com.uchicom.server.ServerProcess#forceClose()
-   */
   @Override
   public void forceClose() {
     // TODO 自動生成されたメソッド・スタブ
