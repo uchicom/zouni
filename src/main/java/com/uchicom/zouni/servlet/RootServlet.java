@@ -25,7 +25,8 @@ public class RootServlet extends HttpServlet {
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    logger.info(req.getHeader("User-Agent") + "@" + req.getRemoteAddr() + ":" + req.getPathInfo());
+    logger.info(
+        req.getHeader("User-Agent") + "@" + req.getRemoteAddr() + ":" + req.getRequestURI());
     var file = new File(baseFile, path);
     var bytes = readFile(file);
     res.setContentType("text/html");
