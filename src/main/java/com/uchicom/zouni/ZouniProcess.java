@@ -173,6 +173,34 @@ public class ZouniProcess implements ServerProcess {
                       .getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
             }
+            var cookieList = res.getCookieList();
+            if (!cookieList.isEmpty()) {
+              for (var cookie : cookieList) {
+                os.write(Constants.SET_COOKIE);
+                os.write(cookie.getName().getBytes(StandardCharsets.UTF_8));
+                os.write("=".getBytes(StandardCharsets.US_ASCII));
+                os.write(cookie.getValue().getBytes(StandardCharsets.UTF_8));
+                if (cookie.getDomain() != null) {
+                  os.write("; ".getBytes(StandardCharsets.US_ASCII));
+                  os.write(cookie.getDomain().getBytes(StandardCharsets.UTF_8));
+                }
+                if (cookie.isHttpOnly()) {
+                  os.write("; HttpOnly".getBytes(StandardCharsets.US_ASCII));
+                }
+                if (cookie.getSecure()) {
+                  os.write("; Secure".getBytes(StandardCharsets.US_ASCII));
+                }
+                if (cookie.getPath() != null) {
+                  os.write("; Path=".getBytes(StandardCharsets.US_ASCII));
+                  os.write(String.valueOf(cookie.getPath()).getBytes(StandardCharsets.US_ASCII));
+                }
+                if (cookie.getMaxAge() > 0) {
+                  os.write("; Max-Age=".getBytes(StandardCharsets.US_ASCII));
+                  os.write(String.valueOf(cookie.getMaxAge()).getBytes(StandardCharsets.US_ASCII));
+                }
+                os.write(Constants.RES_LINE_END);
+              }
+            }
             os.write(Constants.RES_LINE_END);
             os.write(baos.toByteArray());
             os.flush();
