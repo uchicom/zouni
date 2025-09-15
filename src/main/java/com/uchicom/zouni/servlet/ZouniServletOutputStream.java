@@ -8,7 +8,7 @@ import java.io.OutputStream;
 
 public class ZouniServletOutputStream extends ServletOutputStream {
 
-  private OutputStream os;
+  private final OutputStream os;
 
   public ZouniServletOutputStream(OutputStream os) {
     this.os = os;

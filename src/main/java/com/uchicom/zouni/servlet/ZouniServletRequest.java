@@ -42,6 +42,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   private boolean gzip;
   private boolean deflate;
   private ByteArrayInputStream bais;
+  private Integer contentLength;
 
   public ZouniServletRequest(Socket socket) {
     this.socket = socket;
@@ -67,7 +68,7 @@ public class ZouniServletRequest implements HttpServletRequest {
         sb.append("\r\n");
         Value cl = valueMap.get("header.Content-Length");
         if (cl != null) {
-          int contentLength = Integer.parseInt(cl.getParameter());
+          contentLength = Integer.parseInt(cl.getParameter());
           char[] chars = new char[contentLength];
           int length = 0;
           int index = 0;
@@ -207,20 +208,21 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   @Override
   public int getContentLength() {
-    // TODO Auto-generated method stub
-    return 0;
+    return contentLength;
   }
 
   @Override
   public String getContentType() {
-    // TODO Auto-generated method stub
-    return null;
+    var value = valueMap.get("header.Content-Type");
+    if (value == null) {
+      return null;
+    }
+    return value.getParameter();
   }
 
   @Override
   public ServletInputStream getInputStream() throws IOException {
-    // TODO Auto-generated method stub
-    return null;
+    return new ZouniServletInputStream(bais);
   }
 
   @Override
