@@ -111,6 +111,7 @@ public class ZouniProcess implements ServerProcess {
             os.write(Constants.RES_200);
             String contentType = res.getContentType();
             if (contentType != null) {
+              os.write("Content-Type: ".getBytes(StandardCharsets.US_ASCII));
               os.write(contentType.getBytes(StandardCharsets.US_ASCII));
               os.write(Constants.RES_LINE_END);
             } else {
