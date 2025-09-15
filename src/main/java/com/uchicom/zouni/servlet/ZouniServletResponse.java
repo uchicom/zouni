@@ -9,16 +9,23 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 public class ZouniServletResponse implements HttpServletResponse {
 
   private OutputStream os;
   private String type;
+  private List<Cookie> cookieList = new ArrayList<>();
 
   public ZouniServletResponse(OutputStream os) {
     this.os = os;
+  }
+
+  public List<Cookie> getCookieList() {
+    return cookieList;
   }
 
   @Override
@@ -87,8 +94,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public void addCookie(Cookie cookie) {
-    // TODO Auto-generated method stub
-
+    cookieList.add(cookie);
   }
 
   @Override
