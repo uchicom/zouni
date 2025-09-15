@@ -14,14 +14,17 @@ import java.util.HashMap;
 public class Main {
 
   public static void main(String[] args) {
-    var parameter = new ZouniParameter(args);
-    if (parameter.init(System.err)) {
-      var servlet = new RootServlet(DIFactory.logger(), parameter.get("public"), "user.html");
+    var zouniParameter = new ZouniParameter(args);
+    if (zouniParameter.init(System.err)) {
+      var servlet = new RootServlet(DIFactory.logger(), zouniParameter.get("public"), "user.html");
       var map = new HashMap<String, Servlet>();
       map.put("pub./user/", servlet);
       var startWithMap = new HashMap<String, Servlet>();
       startWithMap.put("pub./user/", servlet);
-      parameter.createServer((a, b) -> new ZouniProcess(a, b, map, startWithMap)).execute();
+      zouniParameter
+          .createServer(
+              (parameter, socket) -> new ZouniProcess(parameter, socket, map, startWithMap))
+          .execute();
     }
   }
 }
