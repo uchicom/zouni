@@ -207,6 +207,15 @@ public class ZouniProcess implements ServerProcess {
                 os.write(Constants.RES_LINE_END);
               }
             }
+            // ヘッダー
+            for (var headerName : res.getHeaderNames()) {
+              for (var headerValue : res.getHeaders(headerName)) {
+                os.write(headerName.getBytes(StandardCharsets.US_ASCII));
+                os.write(": ".getBytes(StandardCharsets.US_ASCII));
+                os.write(headerValue.getBytes(StandardCharsets.US_ASCII));
+                os.write(Constants.RES_LINE_END);
+              }
+            }
             os.write(Constants.RES_LINE_END);
             os.write(baos.toByteArray());
             os.flush();
