@@ -121,10 +121,11 @@ public class ZouniServletRequest implements HttpServletRequest {
           for (var i = 0; i < splitedCookies.length; i++) {
             String cookie = splitedCookies[i];
             String[] keyValue = cookie.trim().split("=", 0);
-            this.cookies[i] = new Cookie(keyValue[0], keyValue[1]);
+            String value = keyValue.length == 1 ? null : keyValue[1];
+            this.cookies[i] = new Cookie(keyValue[0], value);
             if (keyValue[0].equals("JSESSIONID")) {
               if (session == null) {
-                this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
+                this.session = ZouniServletContext.getInstance().getSession(value);
               }
             }
           }
