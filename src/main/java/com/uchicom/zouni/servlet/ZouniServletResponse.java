@@ -22,6 +22,7 @@ public class ZouniServletResponse implements HttpServletResponse {
   private String type;
   private List<Cookie> cookieList = new ArrayList<>();
   private Map<String, List<String>> headerListMap = new HashMap<String, List<String>>();
+  private int statuscode;
 
   public ZouniServletResponse(OutputStream os) {
     this.os = os;
@@ -173,8 +174,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public void setStatus(int statuscode) {
-    // TODO Auto-generated method stub
-
+    this.statuscode = statuscode;
   }
 
   @Override
@@ -215,8 +215,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public int getStatus() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getStatus'");
+    return statuscode;
   }
 
   @Override
