@@ -22,7 +22,7 @@ public class ZouniServletResponse implements HttpServletResponse {
   private String type;
   private List<Cookie> cookieList = new ArrayList<>();
   private Map<String, List<String>> headerListMap = new HashMap<String, List<String>>();
-  private int statuscode;
+  private int statuscode = 200;
 
   public ZouniServletResponse(OutputStream os) {
     this.os = os;
