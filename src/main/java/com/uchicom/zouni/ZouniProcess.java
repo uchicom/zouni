@@ -107,7 +107,11 @@ public class ZouniProcess implements ServerProcess {
             throw e;
           }
           // chunkの実装がない
-          try (OutputStream os = socket.getOutputStream(); ) {
+          try (OutputStream os = socket.getOutputStream()) {
+            if (res.getStatus() != 200) {
+              error(os, res.getStatus());
+              return;
+            }
             os.write(Constants.RES_200);
             String contentType = res.getContentType();
             if (contentType != null) {
@@ -243,7 +247,7 @@ public class ZouniProcess implements ServerProcess {
     os.write(Constants.RES_404);
     os.write(Constants.RES_CONTENT_TYPE);
     os.write(Constants.RES_CONTENT_LENGTH);
-    os.write(Constants.RES_440_HTML_LENGTH);
+    os.write(Constants.RES_404_HTML_LENGTH);
     os.write(Constants.RES_LINE_END);
     os.write(Constants.RES_SERVER);
     os.write(Constants.RES_LINE_END);
@@ -260,6 +264,18 @@ public class ZouniProcess implements ServerProcess {
     os.write(Constants.RES_SERVER);
     os.write(Constants.RES_LINE_END);
     os.write(Constants.RES_500_HTML);
+    os.flush();
+  }
+
+  void error(OutputStream os, int statuscode) throws IOException {
+    os.write(("HTTP/1.1 " + statuscode).getBytes(StandardCharsets.US_ASCII));
+    os.write(Constants.RES_LINE_END);
+    os.write(Constants.RES_CONTENT_TYPE);
+    os.write(Constants.RES_CONTENT_LENGTH);
+    os.write("0".getBytes(StandardCharsets.US_ASCII));
+    os.write(Constants.RES_LINE_END);
+    os.write(Constants.RES_SERVER);
+    os.write(Constants.RES_LINE_END);
     os.flush();
   }
 }

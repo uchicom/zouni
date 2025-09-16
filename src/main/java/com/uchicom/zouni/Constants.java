@@ -50,7 +50,7 @@ public class Constants {
   public static final byte[] RES_404_HTML =
       "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>"
           .getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_440_HTML_LENGTH =
+  public static final byte[] RES_404_HTML_LENGTH =
       String.valueOf(RES_404_HTML.length).getBytes(StandardCharsets.US_ASCII);
 
   public static final byte[] RES_500 =
