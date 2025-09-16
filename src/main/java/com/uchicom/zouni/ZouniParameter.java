@@ -8,16 +8,16 @@ import com.uchicom.server.ServerProcessFactory;
 import com.uchicom.server.SingleSocketServer;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.servlet.ZouniServletConfig;
-import java.io.PrintStream;
 
 public class ZouniParameter extends Parameter {
 
   public ZouniParameter(String[] args) {
     super(args);
+    init();
   }
 
   /** 初期化 */
-  public boolean init(PrintStream ps) {
+  void init() {
     // 公開ディレクトリの基準フォルダ
     if (!is("public")) {
       put("public", Constants.DEFAULT_PUBLIC);
@@ -43,7 +43,6 @@ public class ZouniParameter extends Parameter {
       put("pool", Constants.DEFAULT_POOL);
     }
     ZouniServletConfig.init(getFile("public"));
-    return true;
   }
 
   public Server createServer(ServerProcessFactory factory) {
