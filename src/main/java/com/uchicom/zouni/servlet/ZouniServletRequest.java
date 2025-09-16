@@ -43,6 +43,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   private boolean deflate;
   private ByteArrayInputStream bais;
   private Integer contentLength;
+  private Cookie[] cookies;
 
   public ZouniServletRequest(Socket socket) {
     this.socket = socket;
@@ -115,8 +116,12 @@ public class ZouniServletRequest implements HttpServletRequest {
         }
         Value cv = valueMap.get("header.Cookie");
         if (cv != null) {
-          for (String cookie : cv.getParameter().split(";", 0)) {
+          var splitedCookies = cv.getParameter().split(";", 0);
+          this.cookies = new Cookie[splitedCookies.length];
+          for (var i = 0; i < splitedCookies.length; i++) {
+            String cookie = splitedCookies[i];
             String[] keyValue = cookie.trim().split("=", 0);
+            this.cookies[i] = new Cookie(keyValue[0], keyValue[1]);
             if (keyValue[0].equals("JSESSIONID")) {
               if (session == null) {
                 this.session = ZouniServletContext.getInstance().getSession(keyValue[1]);
@@ -310,8 +315,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   @Override
   public Cookie[] getCookies() {
-    // TODO Auto-generated method stub
-    return null;
+    return cookies;
   }
 
   @Override
