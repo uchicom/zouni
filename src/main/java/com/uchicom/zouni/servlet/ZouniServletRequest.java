@@ -95,10 +95,13 @@ public class ZouniServletRequest implements HttpServletRequest {
           int startIndex = str.indexOf("\r\n\r\n") + 4;
           int lastIndex = str.indexOf("\r\n", startIndex);
           // multipart未対応
-          if (lastIndex >= 0) {
-            setParameters(str.substring(startIndex, lastIndex));
-          } else {
-            setParameters(str.substring(startIndex));
+          var ct = valueMap.get("header.Content-Type");
+          if ("application/x-www-form-urlencoded".equals(ct.getParameter())) {
+            if (lastIndex >= 0) {
+              setParameters(str.substring(startIndex, lastIndex));
+            } else {
+              setParameters(str.substring(startIndex));
+            }
           }
           // Reader作成
           bais =

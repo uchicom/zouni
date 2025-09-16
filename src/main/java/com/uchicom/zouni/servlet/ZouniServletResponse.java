@@ -11,14 +11,18 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ZouniServletResponse implements HttpServletResponse {
 
   private OutputStream os;
   private String type;
   private List<Cookie> cookieList = new ArrayList<>();
+  private Map<String, List<String>> headerListMap = new HashMap<String, List<String>>();
+  private int statuscode;
 
   public ZouniServletResponse(OutputStream os) {
     this.os = os;
@@ -135,14 +139,19 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public void setHeader(String headername, String value) {
-    // TODO Auto-generated method stub
-
+    var headerList = new ArrayList<String>();
+    headerList.add(value);
+    headerListMap.put(headername, headerList);
   }
 
   @Override
   public void addHeader(String headername, String value) {
-    // TODO Auto-generated method stub
-
+    var headerList = headerListMap.get(headername);
+    if (headerList == null) {
+      headerList = new ArrayList<String>();
+      headerListMap.put(headername, headerList);
+    }
+    headerList.add(value);
   }
 
   @Override
@@ -165,8 +174,7 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public void setStatus(int statuscode) {
-    // TODO Auto-generated method stub
-
+    this.statuscode = statuscode;
   }
 
   @Override
@@ -207,25 +215,25 @@ public class ZouniServletResponse implements HttpServletResponse {
 
   @Override
   public int getStatus() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getStatus'");
+    return statuscode;
   }
 
   @Override
   public String getHeader(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getHeader'");
+    var headerList = headerListMap.get(name);
+    if (headerList == null) {
+      return null;
+    }
+    return headerList.get(0);
   }
 
   @Override
   public Collection<String> getHeaders(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getHeaders'");
+    return headerListMap.get(name);
   }
 
   @Override
   public Collection<String> getHeaderNames() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getHeaderNames'");
+    return headerListMap.keySet();
   }
 }
