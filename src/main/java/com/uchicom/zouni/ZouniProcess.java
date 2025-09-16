@@ -33,6 +33,7 @@ public class ZouniProcess implements ServerProcess {
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
   private Logger logger = DIFactory.logger();
+  private boolean session;
 
   public ZouniProcess(
       Parameter parameter,
@@ -44,189 +45,44 @@ public class ZouniProcess implements ServerProcess {
     this.startWithMap = startWithMap;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
+    this.session = parameter.is("session");
   }
 
   @Override
   public void execute() {
     try {
-      ZouniServletRequest req = new ZouniServletRequest(socket);
-      if ("GET".equals(req.getMethod()) || "POST".equals(req.getMethod())) {
-        String key = "pub." + req.getRequestURI();
-        var servlet = map.get(key);
-        if (servlet == null) {
-          servlet =
-              startWithMap.entrySet().stream()
-                  .filter(entry -> key.startsWith(entry.getKey()))
-                  .map(Entry::getValue)
-                  .findFirst()
-                  .orElse(null);
-        }
-        if (servlet == null) {
-          // リクエスト対象のファイルを探す
-          File file = null;
-          if (req.getRequestURI().endsWith("/")) {
-            File dir = null;
-            if ("/".equals(req.getRequestURI())) {
-              dir = pubDir;
-            } else {
-              dir = new File(pubDir, req.getRequestURI());
-            }
-            file = new File(dir, "index.htm");
-            if (!file.exists()) {
-              file = new File(dir, "index.html");
-            }
-          } else {
-            file = new File(pubDir, req.getRequestURI().substring(1));
-          }
-
-          if (file.exists()) {
-            // ファイルが存在する場合
-            if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
-              // ファイル出力サーブレット
-              servlet = new FileServlet(file);
-            }
-          }
-        }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ZouniServletResponse res = null;
-        GZIPOutputStream gzos = null;
-        if (req.isGzip()) {
-          gzos = new GZIPOutputStream(baos);
-          res = new ZouniServletResponse(gzos);
-        } else {
-          res = new ZouniServletResponse(baos);
-        }
-        if (servlet != null) {
-          // レスポンスヘッダ出力
-          try {
-            servlet.service(req, res);
-          } catch (ServletException e) {
-            try (OutputStream os = socket.getOutputStream(); ) {
-              error500(os);
-            }
-            throw e;
-          }
-          // chunkの実装がない
-          try (OutputStream os = socket.getOutputStream()) {
-            if (res.getStatus() != 200) {
-              error(os, res.getStatus());
-              return;
-            }
-            os.write(Constants.RES_200);
-            String contentType = res.getContentType();
-            if (contentType != null) {
-              os.write("Content-Type: ".getBytes(StandardCharsets.US_ASCII));
-              os.write(contentType.getBytes(StandardCharsets.US_ASCII));
-              os.write(Constants.RES_LINE_END);
-            } else {
-              os.write(Constants.RES_CONTENT_TYPE);
-            }
-            os.write(Constants.RES_EXPIRES);
-            if (req.isGzip()) {
-              os.write(Constants.RES_CONTENT_ENCODING_GZIP);
-              gzos.finish();
-            }
-            os.write(Constants.RES_CONTENT_LENGTH);
-            os.write(String.valueOf(baos.size()).getBytes(StandardCharsets.US_ASCII));
-            os.write(Constants.RES_LINE_END);
-            os.write(Constants.RES_LAST_MODIFIED);
-            os.write(
-                formatter
-                    .format(OffsetDateTime.now(ZoneOffset.systemDefault()))
-                    .getBytes(StandardCharsets.US_ASCII));
-            os.write(Constants.RES_LINE_END);
-            os.write(Constants.RES_SERVER);
-            if (req.getSession() != null && req.getSession().getId() != null) {
-              os.write(Constants.SET_COOKIE);
-              os.write(Constants.JSESSIONID);
-              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
-              os.write(
-                  Constants.formatter
-                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
-                      .getBytes(StandardCharsets.US_ASCII));
-              os.write(Constants.RES_LINE_END);
-
-              os.write(Constants.SET_COOKIE);
-              os.write(Constants.JSESSIONID);
-              os.write(req.getSession().getId().getBytes(StandardCharsets.US_ASCII));
-              os.write("; Domain=".getBytes(StandardCharsets.US_ASCII));
-              os.write(this.host.getBytes(StandardCharsets.US_ASCII));
-              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
-              os.write(
-                  Constants.formatter
-                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).plusDays(1))
-                      .getBytes(StandardCharsets.US_ASCII));
-              os.write(Constants.RES_LINE_END);
-            } else {
-              os.write(Constants.SET_COOKIE);
-              os.write(Constants.JSESSIONID);
-              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
-              os.write(
-                  Constants.formatter
-                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
-                      .getBytes(StandardCharsets.US_ASCII));
-              os.write(Constants.RES_LINE_END);
-              os.write(Constants.SET_COOKIE);
-              os.write(Constants.JSESSIONID);
-              os.write("; Domain=".getBytes(StandardCharsets.US_ASCII));
-              os.write(this.host.getBytes(StandardCharsets.US_ASCII));
-              os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
-              os.write(
-                  Constants.formatter
-                      .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
-                      .getBytes(StandardCharsets.US_ASCII));
-              os.write(Constants.RES_LINE_END);
-            }
-            var cookieList = res.getCookieList();
-            if (!cookieList.isEmpty()) {
-              for (var cookie : cookieList) {
-                os.write(Constants.SET_COOKIE);
-                os.write(cookie.getName().getBytes(StandardCharsets.UTF_8));
-                os.write("=".getBytes(StandardCharsets.US_ASCII));
-                if (cookie.getValue() != null) {
-                  os.write(cookie.getValue().getBytes(StandardCharsets.UTF_8));
-                }
-                if (cookie.getDomain() != null) {
-                  os.write("; ".getBytes(StandardCharsets.US_ASCII));
-                  os.write(cookie.getDomain().getBytes(StandardCharsets.UTF_8));
-                }
-                if (cookie.isHttpOnly()) {
-                  os.write("; HttpOnly".getBytes(StandardCharsets.US_ASCII));
-                }
-                if (cookie.getSecure()) {
-                  os.write("; Secure".getBytes(StandardCharsets.US_ASCII));
-                }
-                if (cookie.getPath() != null) {
-                  os.write("; Path=".getBytes(StandardCharsets.US_ASCII));
-                  os.write(String.valueOf(cookie.getPath()).getBytes(StandardCharsets.US_ASCII));
-                }
-                if (cookie.getMaxAge() > 0) {
-                  os.write("; Max-Age=".getBytes(StandardCharsets.US_ASCII));
-                  os.write(String.valueOf(cookie.getMaxAge()).getBytes(StandardCharsets.US_ASCII));
-                }
-                os.write(Constants.RES_LINE_END);
-              }
-            }
-            // ヘッダー
-            for (var headerName : res.getHeaderNames()) {
-              for (var headerValue : res.getHeaders(headerName)) {
-                os.write(headerName.getBytes(StandardCharsets.US_ASCII));
-                os.write(": ".getBytes(StandardCharsets.US_ASCII));
-                os.write(headerValue.getBytes(StandardCharsets.US_ASCII));
-                os.write(Constants.RES_LINE_END);
-              }
-            }
-            os.write(Constants.RES_LINE_END);
-            os.write(baos.toByteArray());
-            os.flush();
-          }
-
-        } else {
-          try (OutputStream os = socket.getOutputStream(); ) {
-            error404(os);
-          }
-        }
+      var req = createServletRequest();
+      if (!"GET".equals(req.getMethod()) && !"POST".equals(req.getMethod())) {
+        error(405);
+        return;
       }
+      var servlet = getServlet(req);
+      if (servlet == null) {
+        error(404);
+        return;
+      }
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ZouniServletResponse res = null;
+      GZIPOutputStream gzos = null;
+      if (req.isGzip()) {
+        gzos = new GZIPOutputStream(baos);
+        res = new ZouniServletResponse(gzos);
+      } else {
+        res = new ZouniServletResponse(baos);
+      }
+      // レスポンスヘッダ出力
+      try {
+        servlet.service(req, res);
+      } catch (ServletException e) {
+        error(500);
+        throw e;
+      }
+      if (res.getStatus() != 200) {
+        error(res.getStatus());
+        return;
+      }
+      writeResponse(req, res, baos, gzos);
+
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
@@ -238,6 +94,181 @@ public class ZouniProcess implements ServerProcess {
         }
       }
     }
+  }
+
+  void writeResponse(
+      ZouniServletRequest req,
+      ZouniServletResponse res,
+      ByteArrayOutputStream baos,
+      GZIPOutputStream gzos)
+      throws IOException {
+    try (OutputStream os = socket.getOutputStream()) {
+      os.write(Constants.RES_200);
+      // Content-TYpe
+      writeContentType(os, res);
+      os.write(Constants.RES_EXPIRES);
+      // Content-Encoding
+      writeContentEncoding(os, req, gzos);
+
+      os.write(Constants.RES_CONTENT_LENGTH);
+      os.write(String.valueOf(baos.size()).getBytes(StandardCharsets.US_ASCII));
+      os.write(Constants.RES_LINE_END);
+      os.write(Constants.RES_LAST_MODIFIED);
+      os.write(
+          formatter
+              .format(OffsetDateTime.now(ZoneOffset.systemDefault()))
+              .getBytes(StandardCharsets.US_ASCII));
+      os.write(Constants.RES_LINE_END);
+      os.write(Constants.RES_SERVER);
+
+      // SESSION
+      writeSession(os, req);
+
+      // クッキー
+      writeCookie(os, res);
+
+      // ヘッダー
+      writeHeader(os, res);
+
+      os.write(Constants.RES_LINE_END);
+      os.write(baos.toByteArray());
+      os.flush();
+    }
+  }
+
+  void writeContentType(OutputStream os, ZouniServletResponse res) throws IOException {
+    var contentType = res.getContentType();
+    if (contentType != null) {
+      os.write(Constants.RES_CONTENT_TYPE);
+      os.write(contentType.getBytes(StandardCharsets.US_ASCII));
+      os.write(Constants.RES_LINE_END);
+    } else {
+      os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
+    }
+  }
+
+  void writeContentEncoding(OutputStream os, ZouniServletRequest req, GZIPOutputStream gzos)
+      throws IOException {
+    if (!req.isGzip()) {
+      return;
+    }
+    os.write(Constants.RES_CONTENT_ENCODING_GZIP);
+    gzos.finish();
+  }
+
+  void writeSession(OutputStream os, ZouniServletRequest req) throws IOException {
+    if (!session) {
+      return;
+    }
+    os.write(Constants.SET_COOKIE);
+    os.write(Constants.JSESSIONID);
+    if (req.getSession() != null && req.getSession().getId() != null) {
+      os.write(req.getSession().getId().getBytes(StandardCharsets.US_ASCII));
+      os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+      os.write(
+          Constants.formatter
+              .format(OffsetDateTime.now(ZoneOffset.systemDefault()).plusDays(1))
+              .getBytes(StandardCharsets.US_ASCII));
+    } else {
+      os.write("; Expires=".getBytes(StandardCharsets.US_ASCII));
+      os.write(
+          Constants.formatter
+              .format(OffsetDateTime.now(ZoneOffset.systemDefault()).minusDays(1))
+              .getBytes(StandardCharsets.US_ASCII));
+    }
+    os.write("; Domain=".getBytes(StandardCharsets.US_ASCII));
+    os.write(this.host.getBytes(StandardCharsets.US_ASCII));
+    os.write(Constants.RES_LINE_END);
+  }
+
+  void writeCookie(OutputStream os, ZouniServletResponse res) throws IOException {
+    var cookieList = res.getCookieList();
+    if (cookieList.isEmpty()) {
+      return;
+    }
+    for (var cookie : cookieList) {
+      os.write(Constants.SET_COOKIE);
+      os.write(cookie.getName().getBytes(StandardCharsets.UTF_8));
+      os.write("=".getBytes(StandardCharsets.US_ASCII));
+      if (cookie.getValue() != null) {
+        os.write(cookie.getValue().getBytes(StandardCharsets.UTF_8));
+      }
+      if (cookie.getDomain() != null) {
+        os.write("; ".getBytes(StandardCharsets.US_ASCII));
+        os.write(cookie.getDomain().getBytes(StandardCharsets.UTF_8));
+      }
+      if (cookie.isHttpOnly()) {
+        os.write("; HttpOnly".getBytes(StandardCharsets.US_ASCII));
+      }
+      if (cookie.getSecure()) {
+        os.write("; Secure".getBytes(StandardCharsets.US_ASCII));
+      }
+      if (cookie.getPath() != null) {
+        os.write("; Path=".getBytes(StandardCharsets.US_ASCII));
+        os.write(String.valueOf(cookie.getPath()).getBytes(StandardCharsets.US_ASCII));
+      }
+      if (cookie.getMaxAge() > 0) {
+        os.write("; Max-Age=".getBytes(StandardCharsets.US_ASCII));
+        os.write(String.valueOf(cookie.getMaxAge()).getBytes(StandardCharsets.US_ASCII));
+      }
+      os.write(Constants.RES_LINE_END);
+    }
+  }
+
+  void writeHeader(OutputStream os, ZouniServletResponse res) throws IOException {
+    for (var headerName : res.getHeaderNames()) {
+      for (var headerValue : res.getHeaders(headerName)) {
+        os.write(headerName.getBytes(StandardCharsets.US_ASCII));
+        os.write(": ".getBytes(StandardCharsets.US_ASCII));
+        os.write(headerValue.getBytes(StandardCharsets.US_ASCII));
+        os.write(Constants.RES_LINE_END);
+      }
+    }
+  }
+
+  Servlet getServlet(ZouniServletRequest req) throws IOException {
+    String key = "pub." + req.getRequestURI();
+    var servlet = map.get(key);
+    if (servlet == null) {
+      servlet =
+          startWithMap.entrySet().stream()
+              .filter(entry -> key.startsWith(entry.getKey()))
+              .map(Entry::getValue)
+              .findFirst()
+              .orElse(null);
+    }
+    if (servlet == null) {
+      // リクエスト対象のファイルを探す
+      File file = null;
+      if (req.getRequestURI().endsWith("/")) {
+        File dir = null;
+        if ("/".equals(req.getRequestURI())) {
+          dir = pubDir;
+        } else {
+          dir = new File(pubDir, req.getRequestURI());
+        }
+        file = new File(dir, "index.htm");
+        if (!file.exists()) {
+          file = new File(dir, "index.html");
+        }
+      } else {
+        file = new File(pubDir, req.getRequestURI().substring(1));
+      }
+
+      if (file.exists()) {
+        // ファイルが存在する場合
+        if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
+          // ファイル出力サーブレット
+          servlet = new FileServlet(file);
+        }
+      }
+    }
+
+    return servlet;
+  }
+
+  ZouniServletRequest createServletRequest() {
+    return new ZouniServletRequest(socket);
   }
 
   @Override
@@ -254,7 +285,7 @@ public class ZouniProcess implements ServerProcess {
 
   public static void error404(OutputStream os) throws IOException {
     os.write(Constants.RES_404);
-    os.write(Constants.RES_CONTENT_TYPE);
+    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
     os.write(Constants.RES_CONTENT_LENGTH);
     os.write(Constants.RES_404_HTML_LENGTH);
     os.write(Constants.RES_LINE_END);
@@ -266,7 +297,7 @@ public class ZouniProcess implements ServerProcess {
 
   public static void error500(OutputStream os) throws IOException {
     os.write(Constants.RES_500);
-    os.write(Constants.RES_CONTENT_TYPE);
+    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
     os.write(Constants.RES_CONTENT_LENGTH);
     os.write(Constants.RES_500_HTML_LENGTH);
     os.write(Constants.RES_LINE_END);
@@ -279,12 +310,18 @@ public class ZouniProcess implements ServerProcess {
   void error(OutputStream os, int statuscode) throws IOException {
     os.write(("HTTP/1.1 " + statuscode).getBytes(StandardCharsets.US_ASCII));
     os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_CONTENT_TYPE);
+    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
     os.write(Constants.RES_CONTENT_LENGTH);
     os.write("0".getBytes(StandardCharsets.US_ASCII));
     os.write(Constants.RES_LINE_END);
     os.write(Constants.RES_SERVER);
     os.write(Constants.RES_LINE_END);
     os.flush();
+  }
+
+  void error(int statuscode) throws IOException {
+    try (var os = socket.getOutputStream()) {
+      error(os, statuscode);
+    }
   }
 }

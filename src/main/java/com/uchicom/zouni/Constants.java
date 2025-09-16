@@ -30,6 +30,8 @@ public class Constants {
   public static final byte[] RES_LINE_END = "\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_200 = "HTTP/1.1 200 OK\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_CONTENT_TYPE =
+      "Content-Type: ".getBytes(StandardCharsets.US_ASCII);
+  public static final byte[] RES_CONTENT_TYPE_TEXT_HtML =
       "Content-Type: text/html; charset=utf-8\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_CONTENT_LENGTH =
       "Content-Length: ".getBytes(StandardCharsets.US_ASCII);
@@ -38,9 +40,7 @@ public class Constants {
       "Last-Modified: ".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_CONTENT_ENCODING_GZIP =
       "Content-Encoding: gzip\r\n".getBytes(StandardCharsets.US_ASCII);
-  public static final String VERSION = "0.0.1";
-  public static final byte[] RES_SERVER =
-      ("Server: Zouni(" + VERSION + ")\r\n").getBytes(StandardCharsets.US_ASCII);
+  public static final byte[] RES_SERVER = ("Server: Zouni\r\n").getBytes(StandardCharsets.US_ASCII);
   public static final byte[] SET_COOKIE = "Set-Cookie: ".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] JSESSIONID = "JSESSIONID=".getBytes(StandardCharsets.US_ASCII);
 
