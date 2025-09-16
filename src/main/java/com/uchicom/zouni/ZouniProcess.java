@@ -179,7 +179,9 @@ public class ZouniProcess implements ServerProcess {
                 os.write(Constants.SET_COOKIE);
                 os.write(cookie.getName().getBytes(StandardCharsets.UTF_8));
                 os.write("=".getBytes(StandardCharsets.US_ASCII));
-                os.write(cookie.getValue().getBytes(StandardCharsets.UTF_8));
+                if (cookie.getValue() != null) {
+                  os.write(cookie.getValue().getBytes(StandardCharsets.UTF_8));
+                }
                 if (cookie.getDomain() != null) {
                   os.write("; ".getBytes(StandardCharsets.US_ASCII));
                   os.write(cookie.getDomain().getBytes(StandardCharsets.UTF_8));
