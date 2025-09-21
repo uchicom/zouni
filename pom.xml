@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.uchicom</groupId>
   <artifactId>zouni</artifactId>
-  <version>0.5.3</version>
+  <version>0.5.4</version>
   <packaging>jar</packaging>
   <name>zouni</name>
   <description>Web Application Server</description>
@@ -62,7 +62,7 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.27.4</version>
+      <version>3.27.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
