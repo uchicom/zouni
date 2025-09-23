@@ -9,9 +9,11 @@ import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -50,8 +52,8 @@ public class ZouniProcess implements ServerProcess {
 
   @Override
   public void execute() {
-    try {
-      var req = createServletRequest();
+    try (BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
+      var req = createServletRequest(socket, bis);
       if (!"GET".equals(req.getMethod()) && !"POST".equals(req.getMethod())) {
         error(405);
         return;
@@ -267,8 +269,8 @@ public class ZouniProcess implements ServerProcess {
     return servlet;
   }
 
-  ZouniServletRequest createServletRequest() {
-    return new ZouniServletRequest(socket);
+  ZouniServletRequest createServletRequest(Socket socket, InputStream is) {
+    return new ZouniServletRequest(socket, is);
   }
 
   @Override
