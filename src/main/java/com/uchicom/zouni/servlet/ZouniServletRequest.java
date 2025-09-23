@@ -18,7 +18,9 @@ import jakarta.servlet.http.HttpUpgradeHandler;
 import jakarta.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
@@ -45,98 +47,146 @@ public class ZouniServletRequest implements HttpServletRequest {
   private Integer contentLength;
   private Cookie[] cookies;
 
-  public ZouniServletRequest(Socket socket) {
+  public ZouniServletRequest(Socket socket, InputStream is) {
     this.socket = socket;
-    if (socket.isClosed()) return;
+    if (socket.isClosed()) {
+      return;
+    }
+    byte[] buffer = new byte[4 * 1024];
     try {
-      BufferedReader br =
-          new BufferedReader(
-              new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-      String head = br.readLine();
-      String line = br.readLine();
-      var sb = new StringBuilder(4 * 1024);
-      sb.append(head);
-      while (line != null && !"".equals(line)) {
-        String[] headValue = line.split(": ", 2);
-        Value value = new Value();
-        value.setParameter(headValue[1]);
-        valueMap.put("header." + headValue[0], value);
-        sb.append(line);
-        sb.append("\r\n");
-        line = br.readLine();
-      }
-      if (sb.length() > 0) {
-        sb.append("\r\n");
-        Value cl = valueMap.get("header.Content-Length");
-        if (cl != null) {
-          contentLength = Integer.parseInt(cl.getParameter());
-          char[] chars = new char[contentLength];
-          int length = 0;
-          int index = 0;
-          while ((length = br.read(chars, index, chars.length - index)) > 0
-              && index < chars.length) {
-            index += length;
-          }
-          sb.append(chars);
-        }
-        String str = sb.toString();
-        String[] heads = head.split(" ", 0);
-        if (heads[0].equals("GET")) {
-          this.method = "GET";
-          this.requestUri = heads[1];
-          int uriSeparatorIndex = requestUri.indexOf("?");
-          if (uriSeparatorIndex >= 0) {
-            setParameters(this.requestUri.substring(uriSeparatorIndex + 1));
-            this.requestUri = this.requestUri.substring(0, uriSeparatorIndex);
-          }
-        } else if (heads[0].equals("POST")) {
-          this.method = "POST";
-          this.requestUri = heads[1];
-          int startIndex = str.indexOf("\r\n\r\n") + 4;
-          int lastIndex = str.indexOf("\r\n", startIndex);
-          // multipart未対応
-          var ct = valueMap.get("header.Content-Type");
-          if (ct != null && "application/x-www-form-urlencoded".equals(ct.getParameter())) {
-            if (lastIndex >= 0) {
-              setParameters(str.substring(startIndex, lastIndex));
-            } else {
-              setParameters(str.substring(startIndex));
-            }
-          }
-          // Reader作成
-          bais =
-              new ByteArrayInputStream(str.substring(startIndex).getBytes(StandardCharsets.UTF_8));
-        }
-        Value ae = valueMap.get("header.Accept-Encoding");
-        if (ae != null) {
-          for (String enc : ae.getParameter().trim().split("[ ,]+", 0)) {
-            if (!gzip && "gzip".equals(enc)) {
-              gzip = true;
-            } else if (!deflate && "deflate".equals(enc)) {
-              deflate = true;
-            }
-          }
-        }
-        Value cv = valueMap.get("header.Cookie");
-        if (cv != null) {
-          var splitedCookies = cv.getParameter().split(";", 0);
-          this.cookies = new Cookie[splitedCookies.length];
-          for (var i = 0; i < splitedCookies.length; i++) {
-            String cookie = splitedCookies[i];
-            String[] keyValue = cookie.trim().split("=", 0);
-            String value = keyValue.length == 1 ? null : keyValue[1];
-            this.cookies[i] = new Cookie(keyValue[0], value);
-            if (keyValue[0].equals("JSESSIONID")) {
-              if (session == null) {
-                this.session = ZouniServletContext.getInstance().getSession(value);
-              }
-            }
-          }
-        }
-      }
+      int bufferLength = readHeader(is, buffer);
+      readBody(is, buffer, bufferLength);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  int readHeader(InputStream bis, byte[] buffer) throws IOException {
+    var length = 0;
+    var sb = new StringBuilder(4 * 1024);
+    while ((length = bis.read(buffer)) > 0) {
+      var lineLength = getHeadEnd(buffer, length);
+      if (lineLength >= 0) {
+        String line = new String(buffer, 0, lineLength, StandardCharsets.US_ASCII);
+        sb.append(line);
+        length -= lineLength;
+        if (length > 0) {
+          System.arraycopy(buffer, lineLength, buffer, 0, length);
+        }
+        break;
+      } else {
+        sb.append(new String(buffer, 0, length, StandardCharsets.US_ASCII));
+        length = 0;
+      }
+    }
+    analyzeHeader(sb.toString());
+    return length;
+  }
+
+  void analyzeHeader(String header) {
+    String[] headerLine = header.split("\r\n", 0);
+    if (headerLine.length == 0) {
+      throw new RuntimeException("ヘッダが不正");
+    }
+    String[] requestLine = headerLine[0].split(" ", 0);
+    if (requestLine.length < 3) {
+      throw new RuntimeException("リクエストラインが不正");
+    }
+
+    this.method = requestLine[0];
+    this.requestUri = requestLine[1];
+    if (this.method.equals("GET")) {
+      int uriSeparatorIndex = requestUri.indexOf("?");
+      if (uriSeparatorIndex >= 0) {
+        setParameters(this.requestUri.substring(uriSeparatorIndex + 1));
+        this.requestUri = this.requestUri.substring(0, uriSeparatorIndex);
+      }
+    }
+    for (var i = 1; i < headerLine.length; i++) {
+      var line = headerLine[i];
+      String[] headValue = line.split(": ", 2);
+      Value value = new Value();
+      value.setParameter(headValue[1]);
+      valueMap.put("header." + headValue[0], value);
+    }
+    Value ae = valueMap.get("header.Accept-Encoding");
+    if (ae != null) {
+      for (String enc : ae.getParameter().trim().split("[ ,]+", 0)) {
+        if (!gzip && "gzip".equals(enc)) {
+          gzip = true;
+        } else if (!deflate && "deflate".equals(enc)) {
+          deflate = true;
+        }
+      }
+    }
+
+    Value cv = valueMap.get("header.Cookie");
+    if (cv != null) {
+      var splitedCookies = cv.getParameter().split(";", 0);
+      this.cookies = new Cookie[splitedCookies.length];
+      for (var i = 0; i < splitedCookies.length; i++) {
+        String cookie = splitedCookies[i];
+        String[] keyValue = cookie.trim().split("=", 0);
+        String value = keyValue.length == 1 ? null : keyValue[1];
+        this.cookies[i] = new Cookie(keyValue[0], value);
+        if (keyValue[0].equals("JSESSIONID")) {
+          if (session == null) {
+            this.session = ZouniServletContext.getInstance().getSession(value);
+          }
+        }
+      }
+    }
+  }
+
+  // chunked 対応未実装
+  void readBody(InputStream bis, byte[] buffer, int bufferLength) throws IOException {
+    Value cl = valueMap.get("header.Content-Length");
+    ByteArrayOutputStream baos = null;
+    if (cl == null) {
+      return;
+    }
+    contentLength = Integer.parseInt(cl.getParameter());
+    baos = new ByteArrayOutputStream(contentLength);
+
+    if (bufferLength > 0) {
+      baos.write(buffer, 0, bufferLength);
+    }
+    int bodyLength = bufferLength;
+    int length = 0;
+    while ((contentLength == null || bodyLength < contentLength)
+        && (length = bis.read(buffer)) > 0) {
+      baos.write(buffer, 0, length);
+      bodyLength += length;
+    }
+
+    var ct = valueMap.get("header.Content-Type");
+    if (ct != null && "application/x-www-form-urlencoded".equals(ct.getParameter())) {
+      setParameters(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+    }
+    bais = new ByteArrayInputStream(baos.toByteArray());
+  }
+
+  int getHeadEnd(byte[] buffer, int length) {
+    for (var i = 0; i < length - 3; i++) {
+      if (buffer[i] == '\r'
+          && buffer[i + 1] == '\n'
+          && buffer[i + 2] == '\r'
+          && buffer[i + 3] == '\n') {
+        return i + 4;
+      }
+    }
+    return -1;
+  }
+
+  int line(byte[] buffer, int length) {
+    for (var i = 0; i < length; i++) {
+      if (buffer[i] == '\r') {
+        if (i + 1 < length && buffer[i + 1] == '\n') {
+          return i + 2;
+        }
+      }
+    }
+    return -1;
   }
 
   private void setParameters(String parameters) {
