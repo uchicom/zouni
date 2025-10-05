@@ -40,7 +40,7 @@ public class Constants {
       "Last-Modified: ".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_CONTENT_ENCODING_GZIP =
       "Content-Encoding: gzip\r\n".getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_SERVER = ("Server: Zouni\r\n").getBytes(StandardCharsets.US_ASCII);
+  public static final byte[] RES_SERVER = "Server: Zouni\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] SET_COOKIE = "Set-Cookie: ".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] JSESSIONID = "JSESSIONID=".getBytes(StandardCharsets.US_ASCII);
 

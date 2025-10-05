@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.uchicom</groupId>
   <artifactId>zouni</artifactId>
-  <version>0.5.5</version>
+  <version>0.6.0</version>
   <packaging>jar</packaging>
   <name>zouni</name>
   <description>Web Application Server</description>
@@ -46,7 +46,7 @@
     <dependency>
       <groupId>com.uchicom</groupId>
       <artifactId>server</artifactId>
-      <version>0.1.0</version>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>jakarta.servlet</groupId>
@@ -138,7 +138,7 @@
             <importOrder/>
             <removeUnusedImports/>
             <googleJavaFormat>
-              <version>1.17.0</version>
+              <version>1.28.0</version>
               <style>GOOGLE</style>
             </googleJavaFormat>
             <licenseHeader>

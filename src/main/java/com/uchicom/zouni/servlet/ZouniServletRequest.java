@@ -141,12 +141,11 @@ public class ZouniServletRequest implements HttpServletRequest {
   // chunked 対応未実装
   void readBody(InputStream bis, byte[] buffer, int bufferLength) throws IOException {
     Value cl = valueMap.get("header.Content-Length");
-    ByteArrayOutputStream baos = null;
     if (cl == null) {
       return;
     }
     contentLength = Integer.parseInt(cl.getParameter());
-    baos = new ByteArrayOutputStream(contentLength);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(contentLength);
 
     if (bufferLength > 0) {
       baos.write(buffer, 0, bufferLength);
