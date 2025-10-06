@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -25,7 +26,9 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
@@ -86,8 +89,14 @@ public class ZouniProcess implements ServerProcess {
       }
       writeResponse(req, res, baos, gzos);
 
+    } catch (SocketException e) {
+      logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
+    } catch (SSLProtocolException e) {
+      logger.warning("Error ssl protocol ip:" + socket.getInetAddress() + ", " + e.getMessage());
+    } catch (SSLException e) {
+      logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
