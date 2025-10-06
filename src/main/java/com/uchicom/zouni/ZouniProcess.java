@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 public class ZouniProcess implements ServerProcess {
@@ -91,6 +92,8 @@ public class ZouniProcess implements ServerProcess {
       logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
+    } catch (SSLException e) {
+      logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
