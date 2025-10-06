@@ -3,6 +3,7 @@ package com.uchicom.zouni;
 
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
+import com.uchicom.zouni.exception.HttpException;
 import com.uchicom.zouni.factory.di.DIFactory;
 import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
@@ -89,6 +90,8 @@ public class ZouniProcess implements ServerProcess {
       }
       writeResponse(req, res, baos, gzos);
 
+    } catch (HttpException e) {
+      logger.warning("Error http ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SocketException e) {
       logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
@@ -281,8 +284,14 @@ public class ZouniProcess implements ServerProcess {
     return servlet;
   }
 
-  ZouniServletRequest createServletRequest(Socket socket, InputStream is) throws IOException {
-    return new ZouniServletRequest(socket, is);
+  ZouniServletRequest createServletRequest(Socket socket, InputStream is)
+      throws IOException, HttpException {
+    try {
+      return new ZouniServletRequest(socket, is);
+    } catch (HttpException e) {
+      error(e.statusCode);
+      throw e;
+    }
   }
 
   @Override
