@@ -1,6 +1,7 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni.servlet;
 
+import com.uchicom.zouni.exception.HttpException;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
@@ -47,7 +48,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   private Integer contentLength;
   private Cookie[] cookies;
 
-  public ZouniServletRequest(Socket socket, InputStream is) throws IOException {
+  public ZouniServletRequest(Socket socket, InputStream is) throws IOException, HttpException {
     this.socket = socket;
     if (socket.isClosed()) {
       return;
@@ -57,7 +58,7 @@ public class ZouniServletRequest implements HttpServletRequest {
     readBody(is, buffer, bufferLength);
   }
 
-  int readHeader(InputStream bis, byte[] buffer) throws IOException {
+  int readHeader(InputStream bis, byte[] buffer) throws IOException, HttpException {
     var length = 0;
     var sb = new StringBuilder(4 * 1024);
     while ((length = bis.read(buffer)) > 0) {
@@ -79,14 +80,14 @@ public class ZouniServletRequest implements HttpServletRequest {
     return length;
   }
 
-  void analyzeHeader(String header) {
+  void analyzeHeader(String header) throws HttpException {
     String[] headerLine = header.split("\r\n", 0);
     if (headerLine.length == 0) {
-      throw new RuntimeException("ヘッダが不正");
+      throw new HttpException(400, "Invalid header:" + header);
     }
     String[] requestLine = headerLine[0].split(" ", 0);
     if (requestLine.length < 3) {
-      throw new RuntimeException("リクエストラインが不正");
+      throw new HttpException(400, "Invalid request line:" + headerLine[0]);
     }
 
     this.method = requestLine[0];
