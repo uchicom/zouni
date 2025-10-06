@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLHandshakeException;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
@@ -85,6 +86,8 @@ public class ZouniProcess implements ServerProcess {
       }
       writeResponse(req, res, baos, gzos);
 
+    } catch (SSLHandshakeException e) {
+      logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
@@ -269,7 +272,7 @@ public class ZouniProcess implements ServerProcess {
     return servlet;
   }
 
-  ZouniServletRequest createServletRequest(Socket socket, InputStream is) {
+  ZouniServletRequest createServletRequest(Socket socket, InputStream is) throws IOException {
     return new ZouniServletRequest(socket, is);
   }
 
