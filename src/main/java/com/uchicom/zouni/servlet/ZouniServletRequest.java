@@ -47,18 +47,14 @@ public class ZouniServletRequest implements HttpServletRequest {
   private Integer contentLength;
   private Cookie[] cookies;
 
-  public ZouniServletRequest(Socket socket, InputStream is) {
+  public ZouniServletRequest(Socket socket, InputStream is) throws IOException {
     this.socket = socket;
     if (socket.isClosed()) {
       return;
     }
     byte[] buffer = new byte[4 * 1024];
-    try {
-      int bufferLength = readHeader(is, buffer);
-      readBody(is, buffer, bufferLength);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    int bufferLength = readHeader(is, buffer);
+    readBody(is, buffer, bufferLength);
   }
 
   int readHeader(InputStream bis, byte[] buffer) throws IOException {
