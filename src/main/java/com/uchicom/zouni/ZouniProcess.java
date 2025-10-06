@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -86,6 +87,8 @@ public class ZouniProcess implements ServerProcess {
       }
       writeResponse(req, res, baos, gzos);
 
+    } catch (SocketException e) {
+      logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (Throwable e) {
