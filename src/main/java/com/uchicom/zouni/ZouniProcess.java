@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
@@ -92,6 +93,8 @@ public class ZouniProcess implements ServerProcess {
       logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
+    } catch (SSLProtocolException e) {
+      logger.warning("Error ssl protocol ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLException e) {
       logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (Throwable e) {
