@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +25,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -39,6 +41,7 @@ public class ZouniProcess implements ServerProcess {
   private File pubDir;
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
+  private final Set<InetAddress> filterIpSet;
   private Logger logger = DIFactory.logger();
   private boolean session;
 
@@ -46,10 +49,12 @@ public class ZouniProcess implements ServerProcess {
       Parameter parameter,
       Socket socket,
       Map<String, Servlet> map,
-      Map<String, Servlet> startWithMap) {
+      Map<String, Servlet> startWithMap,
+      Set<InetAddress> filterIpSet) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
+    this.filterIpSet = filterIpSet;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
     this.session = parameter.is("session");
@@ -58,6 +63,9 @@ public class ZouniProcess implements ServerProcess {
   @Override
   public void execute() {
     try (BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
+      if (filterIpSet.contains(socket.getInetAddress())) {
+        return;
+      }
       var req = createServletRequest(socket, bis);
       if (!"GET".equals(req.getMethod()) && !"POST".equals(req.getMethod())) {
         error(405);
@@ -96,10 +104,13 @@ public class ZouniProcess implements ServerProcess {
       logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
+      filterIpSet.add(socket.getInetAddress());
     } catch (SSLProtocolException e) {
       logger.warning("Error ssl protocol ip:" + socket.getInetAddress() + ", " + e.getMessage());
+      filterIpSet.add(socket.getInetAddress());
     } catch (SSLException e) {
       logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
+      filterIpSet.add(socket.getInetAddress());
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
