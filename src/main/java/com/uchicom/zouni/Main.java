@@ -4,7 +4,9 @@ package com.uchicom.zouni;
 import com.uchicom.zouni.factory.di.DIFactory;
 import com.uchicom.zouni.servlet.RootServlet;
 import jakarta.servlet.Servlet;
+import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 起動クラス.
@@ -20,8 +22,11 @@ public class Main {
     map.put("pub./user/", servlet);
     var startWithMap = new HashMap<String, Servlet>();
     startWithMap.put("pub./user/", servlet);
+    var filterIpSet = ConcurrentHashMap.<InetAddress>newKeySet();
     zouniParameter
-        .createServer((parameter, socket) -> new ZouniProcess(parameter, socket, map, startWithMap))
+        .createServer(
+            (parameter, socket) ->
+                new ZouniProcess(parameter, socket, map, startWithMap, filterIpSet))
         .execute();
   }
 }
