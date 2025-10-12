@@ -6,6 +6,7 @@ import com.uchicom.zouni.servlet.RootServlet;
 import jakarta.servlet.Servlet;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 起動クラス.
@@ -21,11 +22,19 @@ public class Main {
     map.put("pub./user/", servlet);
     var startWithMap = new HashMap<String, Servlet>();
     startWithMap.put("pub./user/", servlet);
-    var filterIpSet = ConcurrentHashMap.<String>newKeySet();
+    var filterIpMap = new ConcurrentHashMap<String, AtomicInteger>();
     zouniParameter
         .createServer(
             (parameter, socket) ->
-                new ZouniProcess(parameter, socket, map, startWithMap, filterIpSet))
+                new ZouniProcess(parameter, socket, map, startWithMap, filterIpMap))
         .execute();
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  if (filterIpMap != null) {
+                    DIFactory.logger().info("FilteredIp:" + filterIpMap);
+                  }
+                }));
   }
 }
