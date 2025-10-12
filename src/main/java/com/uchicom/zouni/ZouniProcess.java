@@ -25,7 +25,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -41,7 +41,7 @@ public class ZouniProcess implements ServerProcess {
   private File pubDir;
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
-  private final Set<InetAddress> filterIpSet;
+  private KeySetView<String, Boolean> filterIpSet;
   private Logger logger = DIFactory.logger();
   private boolean session;
 
@@ -50,7 +50,7 @@ public class ZouniProcess implements ServerProcess {
       Socket socket,
       Map<String, Servlet> map,
       Map<String, Servlet> startWithMap,
-      Set<InetAddress> filterIpSet) {
+      KeySetView<String, Boolean> filterIpSet) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
@@ -63,7 +63,7 @@ public class ZouniProcess implements ServerProcess {
   @Override
   public void execute() {
     try (BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
-      if (filterIpSet.contains(socket.getInetAddress())) {
+      if (isFilter(socket.getInetAddress())) {
         return;
       }
       var req = createServletRequest(socket, bis);
@@ -104,13 +104,13 @@ public class ZouniProcess implements ServerProcess {
       logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
     } catch (SSLHandshakeException e) {
       logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      filterIpSet.add(socket.getInetAddress());
+      addFilter(socket.getInetAddress());
     } catch (SSLProtocolException e) {
       logger.warning("Error ssl protocol ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      filterIpSet.add(socket.getInetAddress());
+      addFilter(socket.getInetAddress());
     } catch (SSLException e) {
       logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      filterIpSet.add(socket.getInetAddress());
+      addFilter(socket.getInetAddress());
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error processing request", e);
     } finally {
@@ -122,6 +122,20 @@ public class ZouniProcess implements ServerProcess {
         }
       }
     }
+  }
+
+  boolean isFilter(InetAddress inetAddress) {
+    if (filterIpSet == null) {
+      return false;
+    }
+    return filterIpSet.contains(inetAddress.toString());
+  }
+
+  void addFilter(InetAddress inetAddress) {
+    if (filterIpSet == null) {
+      return;
+    }
+    filterIpSet.add(inetAddress.toString());
   }
 
   void writeResponse(
