@@ -25,7 +25,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap.KeySetView;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -41,7 +42,7 @@ public class ZouniProcess implements ServerProcess {
   private File pubDir;
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
-  private KeySetView<String, Boolean> filterIpSet;
+  private ConcurrentMap<String, AtomicInteger> filterIpMap;
   private Logger logger = DIFactory.logger();
   private boolean session;
 
@@ -50,11 +51,11 @@ public class ZouniProcess implements ServerProcess {
       Socket socket,
       Map<String, Servlet> map,
       Map<String, Servlet> startWithMap,
-      KeySetView<String, Boolean> filterIpSet) {
+      ConcurrentMap<String, AtomicInteger> filterIpMap) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
-    this.filterIpSet = filterIpSet;
+    this.filterIpMap = filterIpMap;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
     this.session = parameter.is("session");
@@ -125,17 +126,25 @@ public class ZouniProcess implements ServerProcess {
   }
 
   boolean isFilter(InetAddress inetAddress) {
-    if (filterIpSet == null) {
+    if (filterIpMap == null) {
       return false;
     }
-    return filterIpSet.contains(inetAddress.toString());
+    return filterIpMap.containsKey(inetAddress.toString());
   }
 
   void addFilter(InetAddress inetAddress) {
-    if (filterIpSet == null) {
+    if (filterIpMap == null) {
       return;
     }
-    filterIpSet.add(inetAddress.toString());
+    filterIpMap.compute(
+        inetAddress.toString(),
+        (key, old) -> {
+          if (old == null) {
+            return new AtomicInteger(1);
+          }
+          old.getAndIncrement();
+          return old;
+        });
   }
 
   void writeResponse(
