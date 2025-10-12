@@ -4,7 +4,6 @@ package com.uchicom.zouni;
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.exception.HttpException;
-import com.uchicom.zouni.factory.di.DIFactory;
 import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
@@ -43,7 +42,7 @@ public class ZouniProcess implements ServerProcess {
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
   private ConcurrentMap<String, AtomicInteger> filterIpMap;
-  private Logger logger = DIFactory.logger();
+  private Logger logger;
   private boolean session;
 
   public ZouniProcess(
@@ -51,10 +50,12 @@ public class ZouniProcess implements ServerProcess {
       Socket socket,
       Map<String, Servlet> map,
       Map<String, Servlet> startWithMap,
+      Logger logger,
       ConcurrentMap<String, AtomicInteger> filterIpMap) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
+    this.logger = logger;
     this.filterIpMap = filterIpMap;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
