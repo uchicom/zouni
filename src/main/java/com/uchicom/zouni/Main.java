@@ -16,8 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Main {
 
   public static void main(String[] args) {
+    var logger = DIFactory.logger();
     var zouniParameter = new ZouniParameter(args);
-    var servlet = new RootServlet(DIFactory.logger(), zouniParameter.get("public"), "user.html");
+    var servlet = new RootServlet(logger, zouniParameter.get("public"), "user.html");
     var map = new HashMap<String, Servlet>();
     map.put("pub./user/", servlet);
     var startWithMap = new HashMap<String, Servlet>();
@@ -26,7 +27,7 @@ public class Main {
     zouniParameter
         .createServer(
             (parameter, socket) ->
-                new ZouniProcess(parameter, socket, map, startWithMap, filterIpMap))
+                new ZouniProcess(parameter, socket, map, startWithMap, logger, filterIpMap))
         .execute();
     Runtime.getRuntime()
         .addShutdownHook(
