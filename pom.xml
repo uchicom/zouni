@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.uchicom</groupId>
   <artifactId>zouni</artifactId>
-  <version>0.7.2</version>
+  <version>0.7.3</version>
   <packaging>jar</packaging>
   <name>zouni</name>
   <description>Web Application Server</description>
@@ -192,7 +192,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.13</version>
+            <version>0.8.14</version>
             <executions>
               <execution>
                 <id>default-prepare-agent</id>

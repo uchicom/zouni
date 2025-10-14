@@ -1,6 +1,7 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni;
 
+import com.uchicom.zouni.dto.IpErrorMessageKey;
 import com.uchicom.zouni.factory.di.DIFactory;
 import com.uchicom.zouni.servlet.RootServlet;
 import jakarta.servlet.Servlet;
@@ -23,18 +24,19 @@ public class Main {
     map.put("pub./user/", servlet);
     var startWithMap = new HashMap<String, Servlet>();
     startWithMap.put("pub./user/", servlet);
-    var filterIpMap = new ConcurrentHashMap<String, AtomicInteger>();
+    var ipErrorMessageCountMap = new ConcurrentHashMap<IpErrorMessageKey, AtomicInteger>();
     zouniParameter
         .createServer(
             (parameter, socket) ->
-                new ZouniProcess(parameter, socket, map, startWithMap, logger, filterIpMap))
+                new ZouniProcess(
+                    parameter, socket, map, startWithMap, logger, ipErrorMessageCountMap))
         .execute();
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
                 () -> {
-                  if (filterIpMap != null) {
-                    DIFactory.logger().info("FilteredIp:" + filterIpMap);
+                  if (ipErrorMessageCountMap != null) {
+                    DIFactory.logger().info("IpErrorMessageCount:" + ipErrorMessageCountMap);
                   }
                 }));
   }
