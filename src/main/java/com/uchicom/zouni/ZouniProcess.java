@@ -3,6 +3,7 @@ package com.uchicom.zouni;
 
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
+import com.uchicom.zouni.dto.IpErrorMessageKey;
 import com.uchicom.zouni.exception.HttpException;
 import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
@@ -17,7 +18,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -26,12 +26,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLProtocolException;
 
 public class ZouniProcess implements ServerProcess {
   private static DateTimeFormatter formatter =
@@ -41,7 +37,7 @@ public class ZouniProcess implements ServerProcess {
   private File pubDir;
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
-  private ConcurrentMap<String, AtomicInteger> filterIpMap;
+  private ConcurrentMap<IpErrorMessageKey, AtomicInteger> ipErrorMessageCountMap;
   private Logger logger;
   private boolean session;
 
@@ -51,12 +47,12 @@ public class ZouniProcess implements ServerProcess {
       Map<String, Servlet> map,
       Map<String, Servlet> startWithMap,
       Logger logger,
-      ConcurrentMap<String, AtomicInteger> filterIpMap) {
+      ConcurrentMap<IpErrorMessageKey, AtomicInteger> ipErrorMessageCountMap) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
     this.logger = logger;
-    this.filterIpMap = filterIpMap;
+    this.ipErrorMessageCountMap = ipErrorMessageCountMap;
     this.pubDir = parameter.getFile("public");
     this.host = parameter.get("host");
     this.session = parameter.is("session");
@@ -65,9 +61,6 @@ public class ZouniProcess implements ServerProcess {
   @Override
   public void execute() {
     try (BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
-      if (isFilter(socket.getInetAddress())) {
-        return;
-      }
       var req = createServletRequest(socket, bis);
       if (!"GET".equals(req.getMethod()) && !"POST".equals(req.getMethod())) {
         error(405);
@@ -100,21 +93,8 @@ public class ZouniProcess implements ServerProcess {
       }
       writeResponse(req, res, baos, gzos);
 
-    } catch (HttpException e) {
-      logger.warning("Error http ip:" + socket.getInetAddress() + ", " + e.getMessage());
-    } catch (SocketException e) {
-      logger.warning("Error socket ip:" + socket.getInetAddress() + ", " + e.getMessage());
-    } catch (SSLHandshakeException e) {
-      logger.warning("Error ssl handshake ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      addFilter(socket.getInetAddress());
-    } catch (SSLProtocolException e) {
-      logger.warning("Error ssl protocol ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      addFilter(socket.getInetAddress());
-    } catch (SSLException e) {
-      logger.warning("Error ssl ip:" + socket.getInetAddress() + ", " + e.getMessage());
-      addFilter(socket.getInetAddress());
     } catch (Throwable e) {
-      logger.log(Level.SEVERE, "Error processing request", e);
+      filterLog(socket.getInetAddress(), e);
     } finally {
       if (socket != null && socket.isConnected()) {
         try {
@@ -126,26 +106,26 @@ public class ZouniProcess implements ServerProcess {
     }
   }
 
-  boolean isFilter(InetAddress inetAddress) {
-    if (filterIpMap == null) {
-      return false;
-    }
-    return filterIpMap.containsKey(inetAddress.toString());
-  }
-
-  void addFilter(InetAddress inetAddress) {
-    if (filterIpMap == null) {
+  void filterLog(InetAddress inetAddress, Throwable e) {
+    var message = e.getMessage();
+    if (ipErrorMessageCountMap == null) {
+      warningLog(inetAddress, message);
       return;
     }
-    filterIpMap.compute(
-        inetAddress.toString(),
+    ipErrorMessageCountMap.compute(
+        new IpErrorMessageKey(inetAddress.toString(), message),
         (key, old) -> {
           if (old == null) {
+            warningLog(inetAddress, message);
             return new AtomicInteger(1);
           }
           old.getAndIncrement();
           return old;
         });
+  }
+
+  void warningLog(InetAddress inetAddress, String message) {
+    logger.warning("Error ip:" + inetAddress + ", " + message);
   }
 
   void writeResponse(
