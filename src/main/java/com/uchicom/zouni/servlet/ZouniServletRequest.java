@@ -284,11 +284,7 @@ public class ZouniServletRequest implements HttpServletRequest {
   public String getParameter(String name) {
     Value value = valueMap.get("param." + name);
     if (value != null && value.getParameter() != null) {
-      try {
-        return URLDecoder.decode(value.getParameter(), "utf-8");
-      } catch (UnsupportedEncodingException e) {
-        throw new RuntimeException(e);
-      }
+      return URLDecoder.decode(value.getParameter(), StandardCharsets.UTF_8);
     }
     return null;
   }
@@ -299,21 +295,13 @@ public class ZouniServletRequest implements HttpServletRequest {
     Value value = valueMap.get("param." + key);
     if (value != null) {
       if (value.getParameters() != null) {
-        try {
-          String[] values = new String[value.getParameters().size()];
-          for (int i = 0; i < values.length; i++) {
-            values[i] = URLDecoder.decode(value.getParameters().get(i), "utf-8");
-          }
-          return values;
-        } catch (UnsupportedEncodingException e) {
-          throw new RuntimeException(e);
+        String[] values = new String[value.getParameters().size()];
+        for (int i = 0; i < values.length; i++) {
+          values[i] = URLDecoder.decode(value.getParameters().get(i), StandardCharsets.UTF_8);
         }
+        return values;
       } else if (value.getParameter() != null) {
-        try {
-          return new String[] {URLDecoder.decode(value.getParameter(), "utf-8")};
-        } catch (UnsupportedEncodingException e) {
-          throw new RuntimeException(e);
-        }
+        return new String[] {URLDecoder.decode(value.getParameter(), StandardCharsets.UTF_8)};
       }
     }
     return null;
