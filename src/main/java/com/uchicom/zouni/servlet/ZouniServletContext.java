@@ -17,17 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchEvent.Kind;
-import java.nio.file.WatchEvent.Modifier;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.util.Enumeration;
 import java.util.EventListener;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +33,6 @@ public class ZouniServletContext implements ServletContext {
 
   private ZouniServletContext(File pubFile) {
     this.pubFile = pubFile;
-    watch(pubFile, "pub.");
   }
 
   public static void init(File pubFile) {
@@ -186,74 +176,6 @@ public class ZouniServletContext implements ServletContext {
 
   public void removeSession(ZouniSession session) {
     sessionMap.remove(session.getId());
-  }
-
-  Map<WatchKey, Path> pathMap = new HashMap<>();
-
-  private void watch(File baseFile, String keyPrefix) {
-    Thread thread =
-        new Thread(
-            () -> {
-              try (WatchService service = FileSystems.getDefault().newWatchService()) {
-                regist(service, baseFile);
-                WatchKey key = null;
-                while ((key = service.take()) != null) {
-                  // スレッドの割り込み = 終了要求を判定する. 必要なのか不明
-                  if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedException();
-                  }
-                  if (!key.isValid()) continue;
-                  Path basePath = pathMap.get(key);
-                  if (basePath == null) continue;
-                  for (WatchEvent<?> event : key.pollEvents()) {
-                    if (StandardWatchEventKinds.OVERFLOW.equals(event.kind())) continue;
-                    // eventではファイル名しかとれない
-                    Path file = (Path) event.context();
-                    // 監視対象のフォルダを取得する必要がある
-                    Path real = basePath.resolve(file);
-                    String cpath = real.toFile().getCanonicalPath();
-                    String bpath = baseFile.getCanonicalPath();
-                    String absPath = cpath.substring(bpath.length()).replace('\\', '/');
-                    if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())) {
-                      regist(service, real.toFile());
-                    } else if (StandardWatchEventKinds.ENTRY_DELETE.equals(event.kind())
-                        || StandardWatchEventKinds.ENTRY_MODIFY.equals(event.kind())) {
-                      // 削除時はcancel不要の認識
-                      if (servletMap.containsKey(keyPrefix + absPath)) {
-                        servletMap.remove(keyPrefix + absPath);
-                      }
-                    }
-                  }
-                  key.reset();
-                }
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-              }
-            });
-    thread.setDaemon(false); // mainスレッドと運命を共に
-    thread.start();
-  }
-
-  /** 監視サービスにフォルダを再起呼び出しして登録する */
-  public void regist(WatchService service, File file) throws IOException {
-    if (file.isDirectory()) {
-      Path path = file.toPath();
-      pathMap.put(
-          path.register(
-              service,
-              new Kind[] {
-                StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_MODIFY,
-                StandardWatchEventKinds.ENTRY_DELETE
-              },
-              new Modifier[] {}),
-          path);
-      for (File child : file.listFiles()) {
-        regist(service, child);
-      }
-    }
   }
 
   @Override
