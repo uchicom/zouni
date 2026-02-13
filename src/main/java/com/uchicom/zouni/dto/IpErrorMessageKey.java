@@ -23,15 +23,16 @@ public class IpErrorMessageKey {
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    IpErrorMessageKey other = (IpErrorMessageKey) obj;
-    if (ip == null) {
-      if (other.ip != null) return false;
-    } else if (!ip.equals(other.ip)) return false;
-    if (errorMessage == null) {
-      if (other.errorMessage != null) return false;
-    } else if (!errorMessage.equals(other.errorMessage)) return false;
-    return true;
+    if (obj instanceof IpErrorMessageKey other) {
+      if (ip == null) {
+        if (other.ip != null) return false;
+      } else if (!ip.equals(other.ip)) return false;
+      if (errorMessage == null) {
+        if (other.errorMessage != null) return false;
+      } else if (!errorMessage.equals(other.errorMessage)) return false;
+      return true;
+    }
+    return false;
   }
 
   @Override
