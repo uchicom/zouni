@@ -67,7 +67,8 @@ public class Constants {
 
   static {
     try {
-      mimeProperties.load(Constants.class.getResourceAsStream("com/uchicom/zouni/mime.properties"));
+      mimeProperties.load(
+          Constants.class.getResourceAsStream("/com/uchicom/zouni/mime.properties"));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
