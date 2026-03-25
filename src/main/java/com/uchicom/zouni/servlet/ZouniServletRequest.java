@@ -104,9 +104,9 @@ public class ZouniServletRequest implements HttpServletRequest {
       String[] headValue = line.split(": ", 2);
       Value value = new Value();
       value.setParameter(headValue[1]);
-      valueMap.put("header." + headValue[0], value);
+      valueMap.put("header." + headValue[0].toLowerCase(), value);
     }
-    Value ae = valueMap.get("header.Accept-Encoding");
+    Value ae = valueMap.get("header.accept-encoding");
     if (ae != null) {
       for (String enc : ae.getParameter().trim().split("[ ,]+", 0)) {
         if (!gzip && "gzip".equals(enc)) {
@@ -117,7 +117,7 @@ public class ZouniServletRequest implements HttpServletRequest {
       }
     }
 
-    Value cv = valueMap.get("header.Cookie");
+    Value cv = valueMap.get("header.cookie");
     if (cv != null) {
       var splitedCookies = cv.getParameter().split(";", 0);
       this.cookies = new Cookie[splitedCookies.length];
@@ -137,7 +137,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   // chunked 対応未実装
   void readBody(InputStream bis, byte[] buffer, int bufferLength) throws IOException {
-    Value cl = valueMap.get("header.Content-Length");
+    Value cl = valueMap.get("header.content-length");
     if (cl == null) {
       return;
     }
@@ -155,7 +155,7 @@ public class ZouniServletRequest implements HttpServletRequest {
       bodyLength += length;
     }
 
-    var ct = valueMap.get("header.Content-Type");
+    var ct = valueMap.get("header.content-type");
     if (ct != null && "application/x-www-form-urlencoded".equals(ct.getParameter())) {
       setParameters(new String(baos.toByteArray(), StandardCharsets.UTF_8));
     }
@@ -268,7 +268,7 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   @Override
   public String getContentType() {
-    var value = valueMap.get("header.Content-Type");
+    var value = valueMap.get("header.content-type");
     if (value == null) {
       return null;
     }
@@ -364,8 +364,8 @@ public class ZouniServletRequest implements HttpServletRequest {
 
   @Override
   public String getHeader(String name) {
-    if (valueMap.containsKey("header." + name)) {
-      return valueMap.get("header." + name).getParameter();
+    if (valueMap.containsKey("header." + name.toLowerCase())) {
+      return valueMap.get("header." + name.toLowerCase()).getParameter();
     }
     return null;
   }
