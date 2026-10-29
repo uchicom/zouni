@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * mime対応表の充実が必要.
@@ -26,10 +27,14 @@ public class FileServlet extends HttpServlet {
 
   public FileServlet(File file) {
     this.file = file;
-    String ext = file.getName().substring(file.getName().lastIndexOf(".") + 1);
-    type = Constants.mimeProperties.getProperty(ext);
-    if (type == null) {
+    var name = file.getName();
+    var dot = name.lastIndexOf('.');
+    if (dot < 0) {
       type = Constants.DEFAULT_MIME;
+    } else {
+      type =
+          Constants.mimeProperties.getProperty(
+              name.substring(dot + 1).toLowerCase(Locale.ROOT), Constants.DEFAULT_MIME);
     }
   }
 
@@ -42,6 +47,10 @@ public class FileServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
+    if (!file.isFile() || !file.canRead()) {
+      res.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
     res.setContentType(type);
     // 長さを先に宣言し、ファイルの内容をバッファせずに順次送信する
     res.setContentLengthLong(file.length());
