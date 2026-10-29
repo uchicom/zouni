@@ -43,11 +43,13 @@ public class FileServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     res.setContentType(type);
-    // 解析した情報を元にデータを埋め込んで
+    // 長さを先に宣言し、ファイルの内容をバッファせずに順次送信する
+    res.setContentLengthLong(file.length());
+    res.setDateHeader("Last-Modified", file.lastModified());
     ServletOutputStream sos = res.getOutputStream();
     try (FileInputStream fis = new FileInputStream(file); ) {
       int length = 0;
-      byte[] bytes = new byte[1024 * 4];
+      byte[] bytes = new byte[1024 * 16];
       while ((length = fis.read(bytes)) > 0) {
         sos.write(bytes, 0, length);
       }

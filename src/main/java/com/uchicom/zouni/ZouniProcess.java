@@ -11,7 +11,7 @@ import com.uchicom.zouni.servlet.ZouniServletResponse;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,17 +21,13 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.zip.GZIPOutputStream;
 
 public class ZouniProcess implements ServerProcess {
-  private static DateTimeFormatter formatter =
-      DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
   private String host;
   private Socket socket;
   private File pubDir;
@@ -71,27 +67,25 @@ public class ZouniProcess implements ServerProcess {
         error(404);
         return;
       }
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ZouniServletResponse res = null;
-      GZIPOutputStream gzos = null;
-      if (req.isGzip()) {
-        gzos = new GZIPOutputStream(baos);
-        res = new ZouniServletResponse(gzos);
-      } else {
-        res = new ZouniServletResponse(baos);
-      }
-      // レスポンスヘッダ出力
+      // 本文はバッファせず、ヘッダは本文の出力開始時(または完了時)にソケットへ直接出力する
+      var res =
+          new ZouniServletResponse(
+              new BufferedOutputStream(socket.getOutputStream()),
+              req.isGzip(),
+              (r, os, contentLength, gzip) -> writeHeaders(req, r, os, contentLength, gzip));
       try {
         servlet.service(req, res);
       } catch (ServletException e) {
-        error(500);
+        if (!res.isCommitted()) {
+          error(500);
+        }
         throw e;
       }
-      if (res.getStatus() != 200) {
+      if (!res.isCommitted() && res.getStatus() != 200) {
         error(res.getStatus());
         return;
       }
-      writeResponse(req, res, baos, gzos);
+      res.finish();
 
     } catch (Throwable e) {
       filterLog(socket.getInetAddress(), e);
@@ -128,44 +122,50 @@ public class ZouniProcess implements ServerProcess {
     logger.warning("Error ip:" + inetAddress + ", " + message);
   }
 
-  void writeResponse(
+  /**
+   * レスポンスヘッダを出力する.
+   *
+   * @param contentLength 本文の長さ. 負の場合はchunkedで送信する
+   * @param gzip 本文がgzip圧縮されている場合true
+   */
+  void writeHeaders(
       ZouniServletRequest req,
       ZouniServletResponse res,
-      ByteArrayOutputStream baos,
-      GZIPOutputStream gzos)
+      OutputStream os,
+      long contentLength,
+      boolean gzip)
       throws IOException {
-    try (OutputStream os = socket.getOutputStream()) {
+    if (res.getStatus() == 200) {
       os.write(Constants.RES_200);
-      // Content-TYpe
-      writeContentType(os, res);
-      os.write(Constants.RES_EXPIRES);
-      // Content-Encoding
-      writeContentEncoding(os, req, gzos);
-
-      os.write(Constants.RES_CONTENT_LENGTH);
-      os.write(String.valueOf(baos.size()).getBytes(StandardCharsets.US_ASCII));
+    } else {
+      os.write(("HTTP/1.1 " + res.getStatus()).getBytes(StandardCharsets.US_ASCII));
       os.write(Constants.RES_LINE_END);
-      os.write(Constants.RES_LAST_MODIFIED);
-      os.write(
-          formatter
-              .format(OffsetDateTime.now(ZoneOffset.systemDefault()))
-              .getBytes(StandardCharsets.US_ASCII));
-      os.write(Constants.RES_LINE_END);
-      os.write(Constants.RES_SERVER);
-
-      // SESSION
-      writeSession(os, req);
-
-      // クッキー
-      writeCookie(os, res);
-
-      // ヘッダー
-      writeHeader(os, res);
-
-      os.write(Constants.RES_LINE_END);
-      os.write(baos.toByteArray());
-      os.flush();
     }
+    // Content-TYpe
+    writeContentType(os, res);
+    os.write(Constants.RES_EXPIRES);
+    if (gzip) {
+      os.write(Constants.RES_CONTENT_ENCODING_GZIP);
+    }
+    if (contentLength >= 0) {
+      os.write(Constants.RES_CONTENT_LENGTH);
+      os.write(String.valueOf(contentLength).getBytes(StandardCharsets.US_ASCII));
+      os.write(Constants.RES_LINE_END);
+    } else {
+      os.write(Constants.RES_TRANSFER_ENCODING_CHUNKED);
+    }
+    os.write(Constants.RES_SERVER);
+
+    // SESSION
+    writeSession(os, req);
+
+    // クッキー
+    writeCookie(os, res);
+
+    // ヘッダー
+    writeHeader(os, res);
+
+    os.write(Constants.RES_LINE_END);
   }
 
   void writeContentType(OutputStream os, ZouniServletResponse res) throws IOException {
@@ -177,15 +177,6 @@ public class ZouniProcess implements ServerProcess {
     } else {
       os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
     }
-  }
-
-  void writeContentEncoding(OutputStream os, ZouniServletRequest req, GZIPOutputStream gzos)
-      throws IOException {
-    if (!req.isGzip()) {
-      return;
-    }
-    os.write(Constants.RES_CONTENT_ENCODING_GZIP);
-    gzos.finish();
   }
 
   void writeSession(OutputStream os, ZouniServletRequest req) throws IOException {
