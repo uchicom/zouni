@@ -46,4 +46,46 @@ public class FileServletTest extends AbstractTest {
     // assert
     verify(res).setContentType("application/octet-stream");
   }
+
+  @Test
+  public void doGet_noExtension() throws Exception {
+    var file = new File(tempDir, "README");
+    Files.writeString(file.toPath(), "abc");
+    var res = mock(HttpServletResponse.class);
+    doReturn(mock(ServletOutputStream.class)).when(res).getOutputStream();
+
+    new FileServlet(file).doGet(mock(HttpServletRequest.class), res);
+
+    verify(res).setContentType("application/octet-stream");
+  }
+
+  @Test
+  public void doGet_upperCaseExtension() throws Exception {
+    var file = new File(tempDir, "FOO.PNG");
+    Files.writeString(file.toPath(), "abc");
+    var res = mock(HttpServletResponse.class);
+    doReturn(mock(ServletOutputStream.class)).when(res).getOutputStream();
+
+    new FileServlet(file).doGet(mock(HttpServletRequest.class), res);
+
+    verify(res).setContentType(Constants.mimeProperties.getProperty("png"));
+  }
+
+  @Test
+  public void doGet_notFound() throws Exception {
+    var res = mock(HttpServletResponse.class);
+
+    new FileServlet(new File(tempDir, "none.txt")).doGet(mock(HttpServletRequest.class), res);
+
+    verify(res).sendError(HttpServletResponse.SC_NOT_FOUND);
+  }
+
+  @Test
+  public void doGet_directory() throws Exception {
+    var res = mock(HttpServletResponse.class);
+
+    new FileServlet(tempDir).doGet(mock(HttpServletRequest.class), res);
+
+    verify(res).sendError(HttpServletResponse.SC_NOT_FOUND);
+  }
 }
