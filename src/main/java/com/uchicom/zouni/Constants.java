@@ -76,7 +76,7 @@ public class Constants {
     }
   }
 
-  public static String DEFAULT_MIME = "Content-Type: text/plain";
+  public static String DEFAULT_MIME = "application/octet-stream";
 
   /** ログ出力ディレクトリ. */
   public static final String LOG_DIR = "./logs";
