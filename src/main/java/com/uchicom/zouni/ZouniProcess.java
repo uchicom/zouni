@@ -1,23 +1,23 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni;
 
+import com.uchicom.http.StaticHandler;
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
 import com.uchicom.zouni.dto.IpErrorMessageKey;
 import com.uchicom.zouni.exception.HttpException;
-import com.uchicom.zouni.servlet.FileServlet;
 import com.uchicom.zouni.servlet.ZouniServletRequest;
 import com.uchicom.zouni.servlet.ZouniServletResponse;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 public class ZouniProcess implements ServerProcess {
   private String host;
   private Socket socket;
-  private File pubDir;
+  private StaticHandler staticHandler;
   public Map<String, Servlet> startWithMap;
   private Map<String, Servlet> map;
   private ConcurrentMap<IpErrorMessageKey, AtomicInteger> ipErrorMessageCountMap;
@@ -43,13 +43,14 @@ public class ZouniProcess implements ServerProcess {
       Map<String, Servlet> map,
       Map<String, Servlet> startWithMap,
       Logger logger,
-      ConcurrentMap<IpErrorMessageKey, AtomicInteger> ipErrorMessageCountMap) {
+      ConcurrentMap<IpErrorMessageKey, AtomicInteger> ipErrorMessageCountMap,
+      StaticHandler staticHandler) {
     this.socket = socket;
     this.map = map;
     this.startWithMap = startWithMap;
     this.logger = logger;
     this.ipErrorMessageCountMap = ipErrorMessageCountMap;
-    this.pubDir = parameter.getFile("public");
+    this.staticHandler = staticHandler;
     this.host = parameter.get("host");
     this.session = parameter.is("session");
   }
@@ -64,7 +65,8 @@ public class ZouniProcess implements ServerProcess {
       }
       var servlet = getServlet(req);
       if (servlet == null) {
-        error(404);
+        // サーブレットに割り当てがないリクエストは静的ファイルとして配信する(応答はhttp側が直接出力する)
+        handleStatic(req);
         return;
       }
       // 本文はバッファせず、ヘッダは本文の出力開始時(または完了時)にソケットへ直接出力する
@@ -249,7 +251,23 @@ public class ZouniProcess implements ServerProcess {
     }
   }
 
-  Servlet getServlet(ZouniServletRequest req) throws IOException {
+  void handleStatic(ZouniServletRequest req) throws IOException {
+    String path;
+    try {
+      path = decodePath(req.getRequestURI());
+    } catch (IllegalArgumentException e) {
+      error(400);
+      return;
+    }
+    staticHandler.handle(path, null, req.getHeaderMap(), socket.getOutputStream());
+  }
+
+  /** パスをパーセントデコードする. クエリ文字列と異なり、+は空白にしない. */
+  static String decodePath(String path) {
+    return URLDecoder.decode(path.replace("+", "%2B"), StandardCharsets.UTF_8);
+  }
+
+  Servlet getServlet(ZouniServletRequest req) {
     String key = "pub." + req.getRequestURI();
     var servlet = map.get(key);
     if (servlet == null) {
@@ -260,33 +278,6 @@ public class ZouniProcess implements ServerProcess {
               .findFirst()
               .orElse(null);
     }
-    if (servlet == null) {
-      // リクエスト対象のファイルを探す
-      File file = null;
-      if (req.getRequestURI().endsWith("/")) {
-        File dir = null;
-        if ("/".equals(req.getRequestURI())) {
-          dir = pubDir;
-        } else {
-          dir = new File(pubDir, req.getRequestURI());
-        }
-        file = new File(dir, "index.htm");
-        if (!file.exists()) {
-          file = new File(dir, "index.html");
-        }
-      } else {
-        file = new File(pubDir, req.getRequestURI().substring(1));
-      }
-
-      if (file.exists()) {
-        // ファイルが存在する場合
-        if (file.getCanonicalPath().startsWith(pubDir.getCanonicalPath())) {
-          // ファイル出力サーブレット
-          servlet = new FileServlet(file);
-        }
-      }
-    }
-
     return servlet;
   }
 

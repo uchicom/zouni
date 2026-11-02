@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class ZouniServletRequest implements HttpServletRequest {
   private String method;
@@ -368,6 +369,18 @@ public class ZouniServletRequest implements HttpServletRequest {
       return valueMap.get("header." + name.toLowerCase()).getParameter();
     }
     return null;
+  }
+
+  /** ヘッダー名の大文字小文字を区別しないヘッダーのマップを返す. */
+  public Map<String, String> getHeaderMap() {
+    var headerMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    for (var entry : valueMap.entrySet()) {
+      if (entry.getKey().startsWith("header.")) {
+        headerMap.put(
+            entry.getKey().substring("header.".length()), entry.getValue().getParameter());
+      }
+    }
+    return headerMap;
   }
 
   @Override

@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.uchicom.http.DefaultRouter;
+import com.uchicom.http.StaticHandler;
 import com.uchicom.util.Parameter;
 import jakarta.servlet.Servlet;
 import java.io.ByteArrayInputStream;
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.logging.Logger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -23,6 +26,13 @@ import org.junit.jupiter.api.io.TempDir;
 public class ZouniProcessTest extends AbstractTest {
 
   @TempDir Path pubDir;
+
+  Path htmlDir;
+
+  @BeforeEach
+  void createHtmlDir() throws Exception {
+    htmlDir = Files.createDirectory(pubDir.resolve("html"));
+  }
 
   /** リクエストを処理し、ソケットへ書き込まれた生のレスポンスを返す. */
   String request(String requestLine, String... headers) throws Exception {
@@ -32,6 +42,9 @@ public class ZouniProcessTest extends AbstractTest {
     }
     sb.append("\r\n");
 
+    var router = new DefaultRouter();
+    router.init(pubDir.toFile(), 0);
+    var staticHandler = new StaticHandler(router);
     var parameter = mock(Parameter.class);
     doReturn(pubDir.toFile()).when(parameter).getFile("public");
     doReturn("localhost").when(parameter).get("host");
@@ -48,20 +61,21 @@ public class ZouniProcessTest extends AbstractTest {
             new HashMap<String, Servlet>(),
             new HashMap<String, Servlet>(),
             Logger.getLogger("test"),
-            null)
+            null,
+            staticHandler)
         .execute();
     return out.toString(StandardCharsets.ISO_8859_1);
   }
 
   @Test
   public void staticFileHasContentLengthAndLastModified() throws Exception {
-    var file = pubDir.resolve("a.txt");
+    var file = htmlDir.resolve("a.txt");
     Files.writeString(file, "hello");
     Files.setLastModifiedTime(file, java.nio.file.attribute.FileTime.fromMillis(0));
 
     var res = request("GET /a.txt HTTP/1.1");
 
-    assertThat(res).startsWith("HTTP/1.1 200 OK\r\n");
+    assertThat(res).startsWith("HTTP/1.1 200 OK");
     assertThat(res).contains("Content-Length: 5\r\n");
     assertThat(res).contains("Last-Modified: Thu, 1 Jan 1970 00:00:00 GMT\r\n");
     assertThat(res).endsWith("\r\n\r\nhello");
@@ -71,7 +85,7 @@ public class ZouniProcessTest extends AbstractTest {
   public void largeStaticFileIsSentCompletely() throws Exception {
     var data = new byte[1024 * 1024 + 123];
     new java.util.Random(1).nextBytes(data);
-    Files.write(pubDir.resolve("big.bin"), data);
+    Files.write(htmlDir.resolve("big.bin"), data);
 
     var res = request("GET /big.bin HTTP/1.1");
 
@@ -82,12 +96,61 @@ public class ZouniProcessTest extends AbstractTest {
 
   @Test
   public void staticFileIsNotGzippedBecauseLengthIsDeclared() throws Exception {
-    Files.writeString(pubDir.resolve("a.txt"), "hello");
+    Files.writeString(htmlDir.resolve("a.txt"), "hello");
 
     var res = request("GET /a.txt HTTP/1.1", "Accept-Encoding: gzip");
 
     assertThat(res).doesNotContain("Content-Encoding");
     assertThat(res).endsWith("\r\n\r\nhello");
+  }
+
+  @Test
+  public void directoryRequestServesIndexHtm() throws Exception {
+    Files.writeString(htmlDir.resolve("index.htm"), "top");
+
+    var res = request("GET / HTTP/1.1");
+
+    assertThat(res).startsWith("HTTP/1.1 200 OK");
+    assertThat(res).endsWith("\r\n\r\ntop");
+  }
+
+  @Test
+  public void percentEncodedPathIsDecoded() throws Exception {
+    Files.writeString(htmlDir.resolve("日本 語.txt"), "jp");
+    Files.writeString(htmlDir.resolve("a+b.txt"), "plus");
+
+    assertThat(request("GET /%E6%97%A5%E6%9C%AC%20%E8%AA%9E.txt HTTP/1.1")).endsWith("\r\n\r\njp");
+    assertThat(request("GET /a+b.txt HTTP/1.1")).endsWith("\r\n\r\nplus");
+  }
+
+  @Test
+  public void invalidPercentEncodingIsBadRequest() throws Exception {
+    var res = request("GET /%ZZ.txt HTTP/1.1");
+
+    assertThat(res).startsWith("HTTP/1.1 400");
+  }
+
+  @Test
+  public void notModifiedWhenIfModifiedSinceIsNewer() throws Exception {
+    var file = htmlDir.resolve("a.txt");
+    Files.writeString(file, "hello");
+    Files.setLastModifiedTime(file, java.nio.file.attribute.FileTime.fromMillis(0));
+
+    // ヘッダー名は小文字でも解釈される
+    var res = request("GET /a.txt HTTP/1.1", "if-modified-since: Fri, 2 Jan 2026 00:00:00 GMT");
+
+    assertThat(res).startsWith("HTTP/1.1 304");
+    assertThat(res).doesNotContain("hello");
+  }
+
+  @Test
+  public void dotFileIsNotServed() throws Exception {
+    Files.writeString(htmlDir.resolve(".secret"), "secret");
+
+    var res = request("GET /.secret HTTP/1.1");
+
+    assertThat(res).startsWith("HTTP/1.1 404");
+    assertThat(res).doesNotContain("secret");
   }
 
   @Test
