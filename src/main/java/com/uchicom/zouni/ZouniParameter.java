@@ -1,6 +1,8 @@
 // (C) 2016 uchicom
 package com.uchicom.zouni;
 
+import com.uchicom.http.DefaultRouter;
+import com.uchicom.http.StaticHandler;
 import com.uchicom.server.MultiSocketServer;
 import com.uchicom.server.PoolSocketServer;
 import com.uchicom.server.Server;
@@ -44,6 +46,21 @@ public class ZouniParameter extends Parameter {
       put("pool", Constants.DEFAULT_POOL);
     }
     ZouniServletConfig.init(getFile("public"));
+  }
+
+  /**
+   * 静的ファイル配信のハンドラを生成する. publicパラメータ配下のhtml(公開)、error(エラーページ)を使用する.
+   *
+   * <p>cache_max_kbにキャッシュ対象とする最大ファイルサイズ(KB)を指定できる. 指定なしまたは0はキャッシュしない.
+   */
+  public StaticHandler createStaticHandler() {
+    long cacheSize = 0;
+    if (is("cache_max_kb")) {
+      cacheSize = Math.multiplyExact(Long.parseLong(get("cache_max_kb")), 1024L);
+    }
+    var router = new DefaultRouter();
+    router.init(getFile("public"), cacheSize);
+    return new StaticHandler(router);
   }
 
   public Server createServer(ServerProcessFactory factory) {

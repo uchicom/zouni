@@ -27,6 +27,7 @@ public class Main {
     map.put("pub./user/", servlet);
     var startWithMap = new HashMap<String, Servlet>();
     startWithMap.put("pub./user/", servlet);
+    var staticHandler = zouniParameter.createStaticHandler();
     var ipErrorMessageCountMap = new ConcurrentHashMap<IpErrorMessageKey, AtomicInteger>();
     Runtime.getRuntime()
         .addShutdownHook(
@@ -40,7 +41,13 @@ public class Main {
         zouniParameter.createServer(
             (parameter, socket) ->
                 new ZouniProcess(
-                    parameter, socket, map, startWithMap, logger, ipErrorMessageCountMap));
+                    parameter,
+                    socket,
+                    map,
+                    startWithMap,
+                    logger,
+                    ipErrorMessageCountMap,
+                    staticHandler));
     server.execute();
   }
 
