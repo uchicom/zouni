@@ -28,16 +28,6 @@
     <developerConnection>scm:git:git@github.com:uchicom/zouni.git</developerConnection>
     <url>https://github.com/uchicom/zouni</url>
   </scm>
-  <distributionManagement>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spotless.version>3.10.4</spotless.version>
@@ -51,7 +41,7 @@
     <dependency>
       <groupId>com.uchicom</groupId>
       <artifactId>http</artifactId>
-      <version>0.2.2</version>
+      <version>0.2.3</version>
     </dependency>
     <dependency>
       <groupId>jakarta.servlet</groupId>
@@ -145,7 +135,6 @@
             <googleJavaFormat>
               <version>1.30.0</version>
               <style>GOOGLE</style>
-              f
             </googleJavaFormat>
             <licenseHeader>
               <content>// (C) $YEAR uchicom</content>
