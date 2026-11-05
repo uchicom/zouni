@@ -35,6 +35,8 @@ public class Constants {
       "Content-Type: text/html; charset=utf-8\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_CONTENT_LENGTH =
       "Content-Length: ".getBytes(StandardCharsets.US_ASCII);
+  public static final byte[] RES_TRANSFER_ENCODING_CHUNKED =
+      "Transfer-Encoding: chunked\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_EXPIRES = "Expires: 43200\r\n".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] RES_LAST_MODIFIED =
       "Last-Modified: ".getBytes(StandardCharsets.US_ASCII);
@@ -74,7 +76,7 @@ public class Constants {
     }
   }
 
-  public static String DEFAULT_MIME = "Content-Type: text/plain";
+  public static String DEFAULT_MIME = "application/octet-stream";
 
   /** ログ出力ディレクトリ. */
   public static final String LOG_DIR = "./logs";

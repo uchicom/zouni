@@ -20,6 +20,21 @@ public class ZouniServletOutputStream extends ServletOutputStream {
   }
 
   @Override
+  public void write(byte[] b, int off, int len) throws IOException {
+    os.write(b, off, len);
+  }
+
+  @Override
+  public void flush() throws IOException {
+    os.flush();
+  }
+
+  @Override
+  public void close() throws IOException {
+    os.close();
+  }
+
+  @Override
   public boolean isReady() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'isReady'");
