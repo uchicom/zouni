@@ -46,23 +46,6 @@ public class Constants {
   public static final byte[] SET_COOKIE = "Set-Cookie: ".getBytes(StandardCharsets.US_ASCII);
   public static final byte[] JSESSIONID = "JSESSIONID=".getBytes(StandardCharsets.US_ASCII);
 
-  // エラー
-  public static final byte[] RES_404 =
-      "HTTP/1.1 404 Not Found\r\n".getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_404_HTML =
-      "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>"
-          .getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_404_HTML_LENGTH =
-      String.valueOf(RES_404_HTML.length).getBytes(StandardCharsets.US_ASCII);
-
-  public static final byte[] RES_500 =
-      "HTTP/1.1 500 Internal Server Error\r\n".getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_500_HTML =
-      "<html><head><title>500 Internal Server Error</title></head><body><h1>500 Internal Server Error</h1></body></html>"
-          .getBytes(StandardCharsets.US_ASCII);
-  public static final byte[] RES_500_HTML_LENGTH =
-      String.valueOf(RES_500_HTML.length).getBytes(StandardCharsets.US_ASCII);
-
   public static String SERVER_NAME = "Zouni";
 
   public static Properties mimeProperties = new Properties();
