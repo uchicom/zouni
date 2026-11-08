@@ -1,6 +1,8 @@
 // (C) 2025 uchicom
 package com.uchicom.zouni;
 
+import com.uchicom.http.DefaultRouter;
+import com.uchicom.http.Router;
 import com.uchicom.http.StaticHandler;
 import com.uchicom.server.ServerProcess;
 import com.uchicom.util.Parameter;
@@ -37,6 +39,12 @@ public class ZouniProcess implements ServerProcess {
   private Logger logger;
   private boolean session;
 
+  /** エラー応答の生成にのみ使用する(公開ディレクトリは持たない) */
+  private final Router router = new DefaultRouter();
+
+  /** 最終アクセス時刻(ミリ秒). 読み書きのたびに更新する */
+  private volatile long lastTime = System.currentTimeMillis();
+
   public ZouniProcess(
       Parameter parameter,
       Socket socket,
@@ -57,7 +65,8 @@ public class ZouniProcess implements ServerProcess {
 
   @Override
   public void execute() {
-    try (BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
+    try (BufferedInputStream bis =
+        new BufferedInputStream(ActivityStreams.wrap(socket.getInputStream(), this::touch))) {
       var req = createServletRequest(socket, bis);
       if (!"GET".equals(req.getMethod()) && !"POST".equals(req.getMethod())) {
         error(405);
@@ -72,7 +81,7 @@ public class ZouniProcess implements ServerProcess {
       // 本文はバッファせず、ヘッダは本文の出力開始時(または完了時)にソケットへ直接出力する
       var res =
           new ZouniServletResponse(
-              new BufferedOutputStream(socket.getOutputStream()),
+              new BufferedOutputStream(socketOutputStream()),
               req.isGzip(),
               (r, os, contentLength, gzip) -> writeHeaders(req, r, os, contentLength, gzip));
       try {
@@ -259,7 +268,7 @@ public class ZouniProcess implements ServerProcess {
       error(400);
       return;
     }
-    staticHandler.handle(path, null, req.getHeaderMap(), socket.getOutputStream());
+    staticHandler.handle(path, null, req.getHeaderMap(), socketOutputStream());
   }
 
   /** パスをパーセントデコードする. クエリ文字列と異なり、+は空白にしない. */
@@ -293,55 +302,31 @@ public class ZouniProcess implements ServerProcess {
 
   @Override
   public long getLastTime() {
-    // TODO 自動生成されたメソッド・スタブ
-    return 0;
+    return lastTime;
+  }
+
+  private void touch() {
+    lastTime = System.currentTimeMillis();
+  }
+
+  /** 読み書きのたびに最終アクセス時刻を更新するソケットの出力ストリームを返す. */
+  private OutputStream socketOutputStream() throws IOException {
+    return ActivityStreams.wrap(socket.getOutputStream(), this::touch);
   }
 
   @Override
   public void forceClose() {
-    // TODO 自動生成されたメソッド・スタブ
-
-  }
-
-  public static void error404(OutputStream os) throws IOException {
-    os.write(Constants.RES_404);
-    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
-    os.write(Constants.RES_CONTENT_LENGTH);
-    os.write(Constants.RES_404_HTML_LENGTH);
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_SERVER);
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_404_HTML);
-    os.flush();
-  }
-
-  public static void error500(OutputStream os) throws IOException {
-    os.write(Constants.RES_500);
-    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
-    os.write(Constants.RES_CONTENT_LENGTH);
-    os.write(Constants.RES_500_HTML_LENGTH);
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_SERVER);
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_500_HTML);
-    os.flush();
-  }
-
-  void error(OutputStream os, int statuscode) throws IOException {
-    os.write(("HTTP/1.1 " + statuscode).getBytes(StandardCharsets.US_ASCII));
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_CONTENT_TYPE_TEXT_HtML);
-    os.write(Constants.RES_CONTENT_LENGTH);
-    os.write("0".getBytes(StandardCharsets.US_ASCII));
-    os.write(Constants.RES_LINE_END);
-    os.write(Constants.RES_SERVER);
-    os.write(Constants.RES_LINE_END);
-    os.flush();
-  }
-
-  void error(int statuscode) throws IOException {
-    try (var os = socket.getOutputStream()) {
-      error(os, statuscode);
+    if (socket != null) {
+      try {
+        socket.close();
+      } catch (IOException e) {
+        logger.warning("Socket close error: " + e.getMessage());
+      }
     }
+  }
+
+  /** エラー応答を返す. 応答の組み立てと送信後のクローズはhttpライブラリに任せる. */
+  void error(int statuscode) throws IOException {
+    router.error(String.valueOf(statuscode), socketOutputStream());
   }
 }

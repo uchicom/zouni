@@ -31,7 +31,8 @@ public class ZouniProcessTest extends AbstractTest {
 
   @BeforeEach
   void createHtmlDir() throws Exception {
-    htmlDir = Files.createDirectory(pubDir.resolve("html"));
+    // httpライブラリは公開ディレクトリ直下のファイルをそのまま配信する
+    htmlDir = pubDir;
   }
 
   /** リクエストを処理し、ソケットへ書き込まれた生のレスポンスを返す. */
@@ -65,6 +66,37 @@ public class ZouniProcessTest extends AbstractTest {
             staticHandler)
         .execute();
     return out.toString(StandardCharsets.ISO_8859_1);
+  }
+
+  @Test
+  public void lastTimeIsUpdatedByCommunicationAndForceCloseClosesSocket() throws Exception {
+    var parameter = mock(Parameter.class);
+    doReturn("localhost").when(parameter).get("host");
+    var socket = mock(Socket.class);
+    doReturn(
+            new ByteArrayInputStream("GET /x HTTP/1.1\r\n\r\n".getBytes(StandardCharsets.US_ASCII)))
+        .when(socket)
+        .getInputStream();
+    doReturn(new ByteArrayOutputStream()).when(socket).getOutputStream();
+    var process =
+        new ZouniProcess(
+            parameter,
+            socket,
+            new HashMap<String, Servlet>(),
+            new HashMap<String, Servlet>(),
+            Logger.getLogger("test"),
+            null,
+            mock(StaticHandler.class));
+    var before = process.getLastTime();
+    assertThat(before).isPositive();
+
+    Thread.sleep(5);
+    process.execute();
+
+    assertThat(process.getLastTime()).isGreaterThan(before);
+
+    process.forceClose();
+    org.mockito.Mockito.verify(socket, org.mockito.Mockito.atLeastOnce()).close();
   }
 
   @Test
